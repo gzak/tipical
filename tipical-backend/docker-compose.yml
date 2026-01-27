@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: tipical-postgres
+    environment:
+      POSTGRES_DB: tipical
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tipical-api
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=tipical;Username=postgres;Password=password
+      - GooglePlaces__ApiKey=${GOOGLE_PLACES_API_KEY:-your-google-places-api-key}
+      - GoogleOAuth__ClientId=${GOOGLE_OAUTH_CLIENT_ID:-your-google-oauth-client-id}
+      - JwtSettings__Secret=${JWT_SECRET:-your-jwt-secret-key-at-least-32-characters-long-for-security}
+      - JwtSettings__Issuer=TipicalApi
+      - JwtSettings__Audience=TipicalApp
+      - JwtSettings__ExpirationHours=24
+      - Cors__AllowedOrigins__0=http://localhost:5173
+      - Cors__AllowedOrigins__1=http://localhost:3000
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

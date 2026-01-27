@@ -1,0 +1,131 @@
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
+
+namespace Tipical.Infrastructure.Services;
+
+public class GooglePlacesService
+{
+    private readonly HttpClient _httpClient;
+    private readonly string _apiKey;
+    private const string BaseUrl = "https://maps.googleapis.com/maps/api/place";
+
+    public GooglePlacesService(HttpClient httpClient, IConfiguration configuration)
+    {
+        _httpClient = httpClient;
+        _apiKey = configuration["GooglePlaces:ApiKey"] ?? throw new InvalidOperationException("Google Places API key not configured");
+    }
+
+    public async Task<GooglePlacesSearchResponse> SearchAsync(string query, double? latitude = null, double? longitude = null, int radius = 5000)
+    {
+        var url = $"{BaseUrl}/textsearch/json?query={Uri.EscapeDataString(query)}&key={_apiKey}";
+
+        if (latitude.HasValue && longitude.HasValue)
+        {
+            url += $"&location={latitude},{longitude}&radius={radius}";
+        }
+
+        var response = await _httpClient.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<GooglePlacesSearchResponse>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        return result ?? new GooglePlacesSearchResponse { Results = [] };
+    }
+
+    public async Task<GooglePlaceDetailsResponse> GetPlaceDetailsAsync(string placeId)
+    {
+        var url = $"{BaseUrl}/details/json?place_id={Uri.EscapeDataString(placeId)}&fields=place_id,name,formatted_address,geometry,formatted_phone_number,website,types&key={_apiKey}";
+
+        var response = await _httpClient.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<GooglePlaceDetailsResponse>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        return result ?? new GooglePlaceDetailsResponse();
+    }
+
+    public async Task<GooglePlacesAutocompleteResponse> AutocompleteAsync(string input, double? latitude = null, double? longitude = null)
+    {
+        var url = $"{BaseUrl}/autocomplete/json?input={Uri.EscapeDataString(input)}&key={_apiKey}";
+
+        if (latitude.HasValue && longitude.HasValue)
+        {
+            url += $"&location={latitude},{longitude}&radius=50000";
+        }
+
+        var response = await _httpClient.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<GooglePlacesAutocompleteResponse>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        return result ?? new GooglePlacesAutocompleteResponse { Predictions = [] };
+    }
+}
+
+// Response models
+public class GooglePlacesSearchResponse
+{
+    public List<GooglePlace> Results { get; set; } = [];
+    public string Status { get; set; } = string.Empty;
+}
+
+public class GooglePlace
+{
+    public string Place_Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Formatted_Address { get; set; } = string.Empty;
+    public GoogleGeometry? Geometry { get; set; }
+    public List<string> Types { get; set; } = [];
+}
+
+public class GoogleGeometry
+{
+    public GoogleLocation? Location { get; set; }
+}
+
+public class GoogleLocation
+{
+    public double Lat { get; set; }
+    public double Lng { get; set; }
+}
+
+public class GooglePlaceDetailsResponse
+{
+    public GooglePlaceDetails? Result { get; set; }
+    public string Status { get; set; } = string.Empty;
+}
+
+public class GooglePlaceDetails
+{
+    public string Place_Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Formatted_Address { get; set; } = string.Empty;
+    public string? Formatted_Phone_Number { get; set; }
+    public string? Website { get; set; }
+    public GoogleGeometry? Geometry { get; set; }
+    public List<string> Types { get; set; } = [];
+}
+
+public class GooglePlacesAutocompleteResponse
+{
+    public List<GooglePrediction> Predictions { get; set; } = [];
+    public string Status { get; set; } = string.Empty;
+}
+
+public class GooglePrediction
+{
+    public string Description { get; set; } = string.Empty;
+    public string Place_Id { get; set; } = string.Empty;
+}
