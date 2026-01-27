@@ -6,17 +6,8 @@ namespace Tipical.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/businesses")]
-public class BusinessesController : ControllerBase
+public class BusinessesController(BusinessService businessService, ILogger<BusinessesController> logger) : ControllerBase
 {
-    private readonly BusinessService _businessService;
-    private readonly ILogger<BusinessesController> _logger;
-
-    public BusinessesController(BusinessService businessService, ILogger<BusinessesController> logger)
-    {
-        _businessService = businessService;
-        _logger = logger;
-    }
-
     [HttpGet("search")]
     [ProducesResponseType(typeof(List<BusinessResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<BusinessResponse>>> Search([FromQuery] string query, [FromQuery] double? latitude, [FromQuery] double? longitude, [FromQuery] int radius = 5000)
@@ -29,7 +20,7 @@ public class BusinessesController : ControllerBase
             Radius = radius
         };
 
-        var results = await _businessService.SearchBusinessesAsync(request);
+        var results = await businessService.SearchBusinessesAsync(request);
         return Ok(results);
     }
 
@@ -38,7 +29,7 @@ public class BusinessesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BusinessResponse>> GetById(Guid id)
     {
-        var business = await _businessService.GetBusinessByIdAsync(id);
+        var business = await businessService.GetBusinessByIdAsync(id);
 
         if (business == null)
         {
@@ -60,7 +51,7 @@ public class BusinessesController : ControllerBase
             Type = type
         };
 
-        var results = await _businessService.GetNearbyBusinessesAsync(request);
+        var results = await businessService.GetNearbyBusinessesAsync(request);
         return Ok(results);
     }
 }

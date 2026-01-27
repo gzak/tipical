@@ -5,24 +5,17 @@ using Tipical.Infrastructure.Data;
 
 namespace Tipical.Infrastructure.Repositories;
 
-public class TippingVoteRepository : ITippingVoteRepository
+public class TippingVoteRepository(ApplicationDbContext context) : ITippingVoteRepository
 {
-    private readonly ApplicationDbContext _context;
-
-    public TippingVoteRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<TippingVote?> GetByBusinessAndUserAsync(Guid businessId, string userId)
     {
-        return await _context.TippingVotes
+        return await context.TippingVotes
             .FirstOrDefaultAsync(tv => tv.BusinessId == businessId && tv.UserId == userId);
     }
 
     public async Task<IEnumerable<TippingVote>> GetByBusinessIdAsync(Guid businessId)
     {
-        return await _context.TippingVotes
+        return await context.TippingVotes
             .Where(tv => tv.BusinessId == businessId)
             .ToListAsync();
     }
@@ -36,7 +29,7 @@ public class TippingVoteRepository : ITippingVoteRepository
             // Update existing vote
             existingVote.TippingPolicy = policy;
             existingVote.UpdatedAt = DateTime.UtcNow;
-            _context.TippingVotes.Update(existingVote);
+            context.TippingVotes.Update(existingVote);
         }
         else
         {
@@ -50,16 +43,16 @@ public class TippingVoteRepository : ITippingVoteRepository
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
-            _context.TippingVotes.Add(existingVote);
+            context.TippingVotes.Add(existingVote);
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return existingVote;
     }
 
     public async Task<Dictionary<TippingPolicy, int>> GetVoteCountsByPolicyAsync(Guid businessId)
     {
-        return await _context.TippingVotes
+        return await context.TippingVotes
             .Where(tv => tv.BusinessId == businessId)
             .GroupBy(tv => tv.TippingPolicy)
             .ToDictionaryAsync(g => g.Key, g => g.Count());

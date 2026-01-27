@@ -3,17 +3,10 @@ using System.Text.Json;
 
 namespace Tipical.Infrastructure.Services;
 
-public class GooglePlacesService
+public class GooglePlacesService(HttpClient httpClient, IConfiguration configuration)
 {
-    private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
+    private readonly string _apiKey = configuration["GooglePlaces:ApiKey"] ?? throw new InvalidOperationException("Google Places API key not configured");
     private const string BaseUrl = "https://maps.googleapis.com/maps/api/place";
-
-    public GooglePlacesService(HttpClient httpClient, IConfiguration configuration)
-    {
-        _httpClient = httpClient;
-        _apiKey = configuration["GooglePlaces:ApiKey"] ?? throw new InvalidOperationException("Google Places API key not configured");
-    }
 
     public async Task<GooglePlacesSearchResponse> SearchAsync(string query, double? latitude = null, double? longitude = null, int radius = 5000)
     {
@@ -24,7 +17,7 @@ public class GooglePlacesService
             url += $"&location={latitude},{longitude}&radius={radius}";
         }
 
-        var response = await _httpClient.GetAsync(url);
+        var response = await httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
         var content = await response.Content.ReadAsStringAsync();
@@ -40,7 +33,7 @@ public class GooglePlacesService
     {
         var url = $"{BaseUrl}/details/json?place_id={Uri.EscapeDataString(placeId)}&fields=place_id,name,formatted_address,geometry,formatted_phone_number,website,types&key={_apiKey}";
 
-        var response = await _httpClient.GetAsync(url);
+        var response = await httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
         var content = await response.Content.ReadAsStringAsync();
@@ -61,7 +54,7 @@ public class GooglePlacesService
             url += $"&location={latitude},{longitude}&radius=50000";
         }
 
-        var response = await _httpClient.GetAsync(url);
+        var response = await httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
         var content = await response.Content.ReadAsStringAsync();

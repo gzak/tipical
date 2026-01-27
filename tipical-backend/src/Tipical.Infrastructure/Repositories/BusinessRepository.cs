@@ -7,26 +7,20 @@ using Tipical.Infrastructure.Data;
 
 namespace Tipical.Infrastructure.Repositories;
 
-public class BusinessRepository : IBusinessRepository
+public class BusinessRepository(ApplicationDbContext context) : IBusinessRepository
 {
-    private readonly ApplicationDbContext _context;
     private static readonly GeometryFactory GeometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-
-    public BusinessRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
 
     public async Task<Business?> GetByIdAsync(Guid id)
     {
-        return await _context.Businesses
+        return await context.Businesses
             .Include(b => b.TippingVotes)
             .FirstOrDefaultAsync(b => b.Id == id);
     }
 
     public async Task<Business?> GetByGooglePlaceIdAsync(string googlePlaceId)
     {
-        return await _context.Businesses
+        return await context.Businesses
             .Include(b => b.TippingVotes)
             .FirstOrDefaultAsync(b => b.GooglePlaceId == googlePlaceId);
     }
@@ -35,7 +29,7 @@ public class BusinessRepository : IBusinessRepository
     {
         var point = GeometryFactory.CreatePoint(new Coordinate(longitude, latitude));
 
-        var businesses = await _context.Businesses
+        var businesses = await context.Businesses
             .Where(b => b.Location != null && b.Location.Distance(point) <= radiusMeters)
             .OrderBy(b => b.Location!.Distance(point))
             .Include(b => b.TippingVotes)
@@ -51,8 +45,8 @@ public class BusinessRepository : IBusinessRepository
         business.CreatedAt = DateTime.UtcNow;
         business.UpdatedAt = DateTime.UtcNow;
 
-        _context.Businesses.Add(business);
-        await _context.SaveChangesAsync();
+        context.Businesses.Add(business);
+        await context.SaveChangesAsync();
 
         return business;
     }
@@ -63,15 +57,15 @@ public class BusinessRepository : IBusinessRepository
         business.Location = GeometryFactory.CreatePoint(new Coordinate((double)business.Longitude, (double)business.Latitude));
         business.UpdatedAt = DateTime.UtcNow;
 
-        _context.Businesses.Update(business);
-        await _context.SaveChangesAsync();
+        context.Businesses.Update(business);
+        await context.SaveChangesAsync();
 
         return business;
     }
 
     public async Task<IEnumerable<Business>> SearchAsync(string query)
     {
-        return await _context.Businesses
+        return await context.Businesses
             .Where(b => EF.Functions.ILike(b.Name, $"%{query}%") || EF.Functions.ILike(b.Address, $"%{query}%"))
             .Include(b => b.TippingVotes)
             .Take(50)

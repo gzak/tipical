@@ -8,24 +8,13 @@ using Tipical.Core.DTOs;
 
 namespace Tipical.Infrastructure.Services;
 
-public class GoogleAuthService
+public class GoogleAuthService(IConfiguration configuration)
 {
-    private readonly IConfiguration _configuration;
-    private readonly string _googleClientId;
-    private readonly string _jwtSecret;
-    private readonly string _jwtIssuer;
-    private readonly string _jwtAudience;
-    private readonly int _jwtExpirationHours;
-
-    public GoogleAuthService(IConfiguration configuration)
-    {
-        _configuration = configuration;
-        _googleClientId = configuration["GoogleOAuth:ClientId"] ?? throw new InvalidOperationException("Google OAuth Client ID not configured");
-        _jwtSecret = configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
-        _jwtIssuer = configuration["JwtSettings:Issuer"] ?? "TipicalApi";
-        _jwtAudience = configuration["JwtSettings:Audience"] ?? "TipicalApp";
-        _jwtExpirationHours = int.Parse(configuration["JwtSettings:ExpirationHours"]!);
-    }
+    private readonly string _googleClientId = configuration["GoogleOAuth:ClientId"] ?? throw new InvalidOperationException("Google OAuth Client ID not configured");
+    private readonly string _jwtSecret = configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
+    private readonly string _jwtIssuer = configuration["JwtSettings:Issuer"] ?? "TipicalApi";
+    private readonly string _jwtAudience = configuration["JwtSettings:Audience"] ?? "TipicalApp";
+    private readonly int _jwtExpirationHours = int.Parse(configuration["JwtSettings:ExpirationHours"]!);
 
     public async Task<AuthResponse> VerifyGoogleTokenAsync(string idToken)
     {

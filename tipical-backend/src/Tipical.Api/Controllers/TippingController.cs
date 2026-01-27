@@ -9,22 +9,13 @@ namespace Tipical.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/tipping")]
-public class TippingController : ControllerBase
+public class TippingController(TippingService tippingService, ILogger<TippingController> logger) : ControllerBase
 {
-    private readonly TippingService _tippingService;
-    private readonly ILogger<TippingController> _logger;
-
-    public TippingController(TippingService tippingService, ILogger<TippingController> logger)
-    {
-        _tippingService = tippingService;
-        _logger = logger;
-    }
-
     [HttpGet("votes/{businessId}")]
     [ProducesResponseType(typeof(TippingVotesAggregateResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<TippingVotesAggregateResponse>> GetVotes(Guid businessId)
     {
-        var aggregate = await _tippingService.GetVotesAggregateAsync(businessId);
+        var aggregate = await tippingService.GetVotesAggregateAsync(businessId);
         return Ok(aggregate);
     }
 
@@ -40,7 +31,7 @@ public class TippingController : ControllerBase
             return Unauthorized(new { message = "User ID not found in token" });
         }
 
-        var vote = await _tippingService.GetUserVoteAsync(businessId, userId);
+        var vote = await tippingService.GetUserVoteAsync(businessId, userId);
 
         if (vote == null)
         {
@@ -64,7 +55,7 @@ public class TippingController : ControllerBase
 
         try
         {
-            var vote = await _tippingService.SubmitVoteAsync(businessId, userId, request.TippingPolicy);
+            var vote = await tippingService.SubmitVoteAsync(businessId, userId, request.TippingPolicy);
             return Ok(vote);
         }
         catch (InvalidOperationException ex)

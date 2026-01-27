@@ -4,26 +4,15 @@ using Tipical.Core.Models;
 
 namespace Tipical.Infrastructure.Services;
 
-public class BusinessService
+public class BusinessService(
+    IBusinessRepository businessRepository,
+    ITippingVoteRepository tippingVoteRepository,
+    GooglePlacesService googlePlacesService)
 {
-    private readonly IBusinessRepository _businessRepository;
-    private readonly ITippingVoteRepository _tippingVoteRepository;
-    private readonly GooglePlacesService _googlePlacesService;
-
-    public BusinessService(
-        IBusinessRepository businessRepository,
-        ITippingVoteRepository tippingVoteRepository,
-        GooglePlacesService googlePlacesService)
-    {
-        _businessRepository = businessRepository;
-        _tippingVoteRepository = tippingVoteRepository;
-        _googlePlacesService = googlePlacesService;
-    }
-
     public async Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request)
     {
         // Search Google Places API
-        var googleResults = await _googlePlacesService.SearchAsync(
+        var googleResults = await googlePlacesService.SearchAsync(
             request.Query,
             request.Latitude,
             request.Longitude,
@@ -34,7 +23,7 @@ public class BusinessService
         foreach (var place in googleResults.Results)
         {
             // Check if business exists in our database
-            var business = await _businessRepository.GetByGooglePlaceIdAsync(place.Place_Id);
+            var business = await businessRepository.GetByGooglePlaceIdAsync(place.Place_Id);
 
             if (business == null && place.Geometry?.Location != null)
             {
@@ -50,7 +39,7 @@ public class BusinessService
                     PlaceTypes = [.. place.Types]
                 };
 
-                business = await _businessRepository.CreateAsync(business);
+                business = await businessRepository.CreateAsync(business);
             }
 
             if (business != null)
@@ -66,7 +55,7 @@ public class BusinessService
 
     public async Task<BusinessResponse?> GetBusinessByIdAsync(Guid id)
     {
-        var business = await _businessRepository.GetByIdAsync(id);
+        var business = await businessRepository.GetByIdAsync(id);
         if (business == null) return null;
 
         return await MapToBusinessResponseAsync(business);
@@ -74,7 +63,7 @@ public class BusinessService
 
     public async Task<List<BusinessResponse>> GetNearbyBusinessesAsync(NearbyBusinessesRequest request)
     {
-        var businesses = await _businessRepository.GetNearbyAsync(
+        var businesses = await businessRepository.GetNearbyAsync(
             request.Latitude,
             request.Longitude,
             request.Radius);
@@ -92,7 +81,7 @@ public class BusinessService
 
     private async Task<BusinessResponse> MapToBusinessResponseAsync(Business business)
     {
-        var voteCounts = await _tippingVoteRepository.GetVoteCountsByPolicyAsync(business.Id);
+        var voteCounts = await tippingVoteRepository.GetVoteCountsByPolicyAsync(business.Id);
 
         TippingPolicy? winningPolicy = null;
         int? winningPolicyVoteCount = null;
