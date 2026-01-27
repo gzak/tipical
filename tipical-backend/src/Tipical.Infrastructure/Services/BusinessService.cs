@@ -50,7 +50,7 @@ public class BusinessService(
         }
 
         // Sort by tipping policy ranking (NoTips first, then TipsExcludeTax, then TipsIncludeTax, then Unknown)
-        return businessResponses.OrderBy(b => b.WinningPolicy.HasValue ? (int)b.WinningPolicy.Value : 999).ToList();
+        return [.. businessResponses.OrderBy(b => b.WinningPolicy.HasValue ? (int)b.WinningPolicy.Value : 999)];
     }
 
     public async Task<BusinessResponse?> GetBusinessByIdAsync(Guid id)
@@ -76,7 +76,7 @@ public class BusinessService(
         }
 
         // Sort by tipping policy ranking
-        return businessResponses.OrderBy(b => b.WinningPolicy.HasValue ? (int)b.WinningPolicy.Value : 999).ToList();
+        return [.. businessResponses.OrderBy(b => b.WinningPolicy.HasValue ? (int)b.WinningPolicy.Value : 999)];
     }
 
     private async Task<BusinessResponse> MapToBusinessResponseAsync(Business business)
@@ -86,7 +86,7 @@ public class BusinessService(
         TippingPolicy? winningPolicy = null;
         int? winningPolicyVoteCount = null;
 
-        if (voteCounts.Any())
+        if (voteCounts.Count != 0)
         {
             var winner = voteCounts.OrderByDescending(kvp => kvp.Value).First();
             winningPolicy = winner.Key;

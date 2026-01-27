@@ -35,7 +35,7 @@ public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusin
         int? winningPolicyVoteCount = null;
         var totalVotes = voteCounts.Sum(kvp => kvp.Value);
 
-        if (voteCounts.Any())
+        if (voteCounts.Count != 0)
         {
             var winner = voteCounts.OrderByDescending(kvp => kvp.Value).First();
             winningPolicy = winner.Key;
