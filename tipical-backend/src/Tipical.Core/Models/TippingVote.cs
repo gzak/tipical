@@ -4,7 +4,7 @@ public class TippingVote
 {
     public Guid Id { get; set; }
     public Guid BusinessId { get; set; }
-    public string UserId { get; set; } = string.Empty; // Google user ID
+    public string UserId { get; set; } = null!; // Google user ID
     public TippingPolicy TippingPolicy { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

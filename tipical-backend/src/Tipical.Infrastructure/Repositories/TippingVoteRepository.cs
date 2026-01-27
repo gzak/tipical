@@ -59,12 +59,9 @@ public class TippingVoteRepository : ITippingVoteRepository
 
     public async Task<Dictionary<TippingPolicy, int>> GetVoteCountsByPolicyAsync(Guid businessId)
     {
-        var votes = await _context.TippingVotes
+        return await _context.TippingVotes
             .Where(tv => tv.BusinessId == businessId)
             .GroupBy(tv => tv.TippingPolicy)
-            .Select(g => new { Policy = g.Key, Count = g.Count() })
-            .ToListAsync();
-
-        return votes.ToDictionary(v => v.Policy, v => v.Count);
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
     }
 }

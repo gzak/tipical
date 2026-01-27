@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Tipical.Core.DTOs;
 using Tipical.Infrastructure.Services;
@@ -33,7 +34,7 @@ public class TippingController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TippingVoteResponse>> GetUserVote(Guid businessId)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized(new { message = "User ID not found in token" });

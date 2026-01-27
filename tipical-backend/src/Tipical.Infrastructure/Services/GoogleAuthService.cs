@@ -24,7 +24,7 @@ public class GoogleAuthService
         _jwtSecret = configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
         _jwtIssuer = configuration["JwtSettings:Issuer"] ?? "TipicalApi";
         _jwtAudience = configuration["JwtSettings:Audience"] ?? "TipicalApp";
-        _jwtExpirationHours = int.Parse(configuration["JwtSettings:ExpirationHours"] ?? "24");
+        _jwtExpirationHours = int.Parse(configuration["JwtSettings:ExpirationHours"]!);
     }
 
     public async Task<AuthResponse> VerifyGoogleTokenAsync(string idToken)
@@ -34,7 +34,7 @@ public class GoogleAuthService
             // Verify the Google ID token
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, new GoogleJsonWebSignature.ValidationSettings
             {
-                Audience = new[] { _googleClientId }
+                Audience = [_googleClientId]
             });
 
             // Generate our application JWT token
@@ -65,7 +65,7 @@ public class GoogleAuthService
             new Claim(JwtRegisteredClaimNames.Sub, userId),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(JwtRegisteredClaimNames.Name, name),
-            new Claim("picture", picture ?? ""),
+            new Claim(JwtRegisteredClaimNames.Picture, picture ?? ""),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

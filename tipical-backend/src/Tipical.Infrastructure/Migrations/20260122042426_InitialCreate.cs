@@ -69,7 +69,7 @@ namespace Tipical.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "ix_tipping_votes_business_user",
                 table: "tipping_votes",
-                columns: new[] { "business_id", "user_id" },
+                columns: ["business_id", "user_id"],
                 unique: true);
         }
 

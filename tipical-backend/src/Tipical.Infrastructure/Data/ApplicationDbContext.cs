@@ -3,13 +3,8 @@ using Tipical.Core.Models;
 
 namespace Tipical.Infrastructure.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-
     public DbSet<Business> Businesses { get; set; }
     public DbSet<TippingVote> TippingVotes { get; set; }
 
