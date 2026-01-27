@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using NetTopologySuite.Geometries;
+using Tipical.Core.Models;
 
 #nullable disable
 
@@ -13,6 +14,7 @@ namespace Tipical.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:Enum:tipping_policy", "no_tips,tips_exclude_tax,tips_include_tax")
                 .Annotation("Npgsql:PostgresExtension:postgis", ",,");
 
             migrationBuilder.CreateTable(
@@ -44,7 +46,7 @@ namespace Tipical.Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     business_id = table.Column<Guid>(type: "uuid", nullable: false),
                     user_id = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    tipping_policy = table.Column<int>(type: "integer", nullable: false),
+                    tipping_policy = table.Column<TippingPolicy>(type: "tipping_policy", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },

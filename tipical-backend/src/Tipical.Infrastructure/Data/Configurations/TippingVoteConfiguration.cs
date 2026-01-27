@@ -27,7 +27,6 @@ public class TippingVoteConfiguration : IEntityTypeConfiguration<TippingVote>
 
         builder.Property(tv => tv.TippingPolicy)
             .HasColumnName("tipping_policy")
-            .HasConversion<int>()
             .IsRequired();
 
         builder.Property(tv => tv.CreatedAt)

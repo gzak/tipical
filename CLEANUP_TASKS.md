@@ -1,5 +1,4 @@
 # List of refactoring/cleanup prompts
 
-- Ensure TippingPolicy is mapped as a Postgres enum column type using the MapEnum extension method in the UseNpgsql call. Redo the initial create migration with this change, since the migrations have not been run yet.
 - Business objects should only be searchable with the Google Places API. Results are to be merged with business objects on demand via a bulk lookup by Google Place IDs rather than individually, and Google Places objects which do not match should be represented as "Unknown" gray placeholder business objects. Business objects should only be created when users submit votes, not upon read from Google Places API.
 - Use the FlexLabs.EntityFrameworkCore.Upsert nuget package to rewrite all upsert operations atomically using the provided Upsert + On extension methods.

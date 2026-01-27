@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Tipical.Core.Models;
 using Tipical.Infrastructure.Data;
 
 #nullable disable
@@ -21,6 +22,7 @@ namespace Tipical.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "10.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "tipping_policy", new[] { "no_tips", "tips_exclude_tax", "tips_include_tax" });
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
@@ -111,8 +113,8 @@ namespace Tipical.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int>("TippingPolicy")
-                        .HasColumnType("integer")
+                    b.Property<TippingPolicy>("TippingPolicy")
+                        .HasColumnType("tipping_policy")
                         .HasColumnName("tipping_policy");
 
                     b.Property<DateTime>("UpdatedAt")

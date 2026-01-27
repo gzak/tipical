@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Tipical.Core.Interfaces;
+using Tipical.Core.Models;
 using Tipical.Infrastructure.Data;
 using Tipical.Infrastructure.Repositories;
 using Tipical.Infrastructure.Services;
@@ -18,7 +19,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        o => o.UseNetTopologySuite()
+        o => o.UseNetTopologySuite().MapEnum<TippingPolicy>()
     )
 );
 
