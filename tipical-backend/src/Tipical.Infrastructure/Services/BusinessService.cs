@@ -18,68 +18,51 @@ public class BusinessService(
             request.Longitude,
             request.Radius);
 
+        // Extract all Google Place IDs
+        var googlePlaceIds = googleResults.Results.Select(p => p.Place_Id).ToList();
+
+        // Single bulk lookup for all businesses
+        var existingBusinesses = await businessRepository.GetByGooglePlaceIdsAsync(googlePlaceIds);
+
         var businessResponses = new List<BusinessResponse>();
 
         foreach (var place in googleResults.Results)
         {
-            // Check if business exists in our database
-            var business = await businessRepository.GetByGooglePlaceIdAsync(place.Place_Id);
+            if (place.Geometry?.Location == null) continue;
 
-            if (business == null && place.Geometry?.Location != null)
+            // Check if business exists in database (has votes)
+            if (existingBusinesses.TryGetValue(place.Place_Id, out var business))
             {
-                // Create new business entry
-                business = new Business
+                // Business exists - merge Google Places data with vote data
+                var businessResponse = await MapToBusinessResponseAsync(business, place);
+                businessResponses.Add(businessResponse);
+            }
+            else
+            {
+                // Placeholder - business not voted on yet
+                var placeholderResponse = new BusinessResponse
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.NewGuid(), // Temporary GUID (not persisted)
                     GooglePlaceId = place.Place_Id,
                     Name = place.Name,
                     Address = place.Formatted_Address,
                     Latitude = (decimal)place.Geometry.Location.Lat,
                     Longitude = (decimal)place.Geometry.Location.Lng,
-                    PlaceTypes = [.. place.Types]
+                    PlaceTypes = [.. place.Types],
+                    Phone = place.Formatted_Phone_Number,
+                    Website = place.Website,
+                    WinningPolicy = null, // Indicates placeholder
+                    WinningPolicyVoteCount = null
                 };
-
-                business = await businessRepository.CreateAsync(business);
-            }
-
-            if (business != null)
-            {
-                var businessResponse = await MapToBusinessResponseAsync(business);
-                businessResponses.Add(businessResponse);
+                businessResponses.Add(placeholderResponse);
             }
         }
 
-        // Sort by tipping policy ranking (NoTips first, then TipsExcludeTax, then TipsIncludeTax, then Unknown)
+        // Sort by tipping policy ranking (NoTips first, then TipsExcludeTax, then TipsIncludeTax, then Unknown/placeholders)
         return [.. businessResponses.OrderBy(b => b.WinningPolicy.HasValue ? (int)b.WinningPolicy.Value : 999)];
     }
 
-    public async Task<BusinessResponse?> GetBusinessByIdAsync(Guid id)
-    {
-        var business = await businessRepository.GetByIdAsync(id);
-        if (business == null) return null;
-
-        return await MapToBusinessResponseAsync(business);
-    }
-
-    public async Task<List<BusinessResponse>> GetNearbyBusinessesAsync(NearbyBusinessesRequest request)
-    {
-        var businesses = await businessRepository.GetNearbyAsync(
-            request.Latitude,
-            request.Longitude,
-            request.Radius);
-
-        var businessResponses = new List<BusinessResponse>();
-        foreach (var business in businesses)
-        {
-            var response = await MapToBusinessResponseAsync(business);
-            businessResponses.Add(response);
-        }
-
-        // Sort by tipping policy ranking
-        return [.. businessResponses.OrderBy(b => b.WinningPolicy.HasValue ? (int)b.WinningPolicy.Value : 999)];
-    }
-
-    private async Task<BusinessResponse> MapToBusinessResponseAsync(Business business)
+    private async Task<BusinessResponse> MapToBusinessResponseAsync(Business business, GooglePlace googlePlace)
     {
         var voteCounts = await tippingVoteRepository.GetVoteCountsByPolicyAsync(business.Id);
 
@@ -97,13 +80,13 @@ public class BusinessService(
         {
             Id = business.Id,
             GooglePlaceId = business.GooglePlaceId,
-            Name = business.Name,
-            Address = business.Address,
-            Latitude = business.Latitude,
-            Longitude = business.Longitude,
-            PlaceTypes = business.PlaceTypes,
-            Phone = business.Phone,
-            Website = business.Website,
+            Name = googlePlace.Name,
+            Address = googlePlace.Formatted_Address,
+            Latitude = googlePlace.Geometry?.Location != null ? (decimal)googlePlace.Geometry.Location.Lat : 0,
+            Longitude = googlePlace.Geometry?.Location != null ? (decimal)googlePlace.Geometry.Location.Lng : 0,
+            PlaceTypes = [.. googlePlace.Types],
+            Phone = googlePlace.Formatted_Phone_Number,
+            Website = googlePlace.Website,
             WinningPolicy = winningPolicy,
             WinningPolicyVoteCount = winningPolicyVoteCount
         };

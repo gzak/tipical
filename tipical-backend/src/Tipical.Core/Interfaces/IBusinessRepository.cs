@@ -6,8 +6,6 @@ public interface IBusinessRepository
 {
     Task<Business?> GetByIdAsync(Guid id);
     Task<Business?> GetByGooglePlaceIdAsync(string googlePlaceId);
-    Task<IEnumerable<Business>> GetNearbyAsync(double latitude, double longitude, int radiusMeters);
+    Task<Dictionary<string, Business>> GetByGooglePlaceIdsAsync(IEnumerable<string> googlePlaceIds);
     Task<Business> CreateAsync(Business business);
-    Task<Business> UpdateAsync(Business business);
-    Task<IEnumerable<Business>> SearchAsync(string query);
 }

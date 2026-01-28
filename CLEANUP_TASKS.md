@@ -1,4 +1,3 @@
 # List of refactoring/cleanup prompts
 
-- Business objects should only be searchable with the Google Places API. Results are to be merged with business objects on demand via a bulk lookup by Google Place IDs rather than individually, and Google Places objects which do not match should be represented as "Unknown" gray placeholder business objects. Business objects should only be created when users submit votes, not upon read from Google Places API.
 - Use the FlexLabs.EntityFrameworkCore.Upsert nuget package to rewrite all upsert operations atomically using the provided Upsert + On extension methods.

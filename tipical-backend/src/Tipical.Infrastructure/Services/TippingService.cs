@@ -6,16 +6,35 @@ namespace Tipical.Infrastructure.Services;
 
 public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusinessRepository businessRepository)
 {
-    public async Task<TippingVoteResponse> SubmitVoteAsync(Guid businessId, string userId, TippingPolicy policy)
+    public async Task<TippingVoteResponse> SubmitVoteAsync(Guid businessId, string userId, TippingPolicy policy, string googlePlaceId)
     {
-        // Verify business exists
-        var business = await businessRepository.GetByIdAsync(businessId);
-        if (business == null)
+        Business? business = null;
+
+        // If businessId is provided and not empty, try to get business by ID
+        if (businessId != Guid.Empty)
         {
-            throw new InvalidOperationException($"Business with ID {businessId} not found");
+            business = await businessRepository.GetByIdAsync(businessId);
         }
 
-        var vote = await tippingVoteRepository.UpsertAsync(businessId, userId, policy);
+        // If not found by ID, check if business exists by googlePlaceId
+        if (business == null)
+        {
+            business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
+        }
+
+        // If still not found, create minimal business record
+        if (business == null)
+        {
+            business = new Business
+            {
+                Id = Guid.NewGuid(),
+                GooglePlaceId = googlePlaceId
+            };
+            business = await businessRepository.CreateAsync(business);
+        }
+
+        // Use resolved business ID for vote
+        var vote = await tippingVoteRepository.UpsertAsync(business.Id, userId, policy);
 
         return new TippingVoteResponse
         {

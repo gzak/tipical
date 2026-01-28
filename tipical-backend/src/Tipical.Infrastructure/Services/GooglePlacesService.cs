@@ -29,22 +29,6 @@ public class GooglePlacesService(HttpClient httpClient, IConfiguration configura
         return result ?? new GooglePlacesSearchResponse { Results = [] };
     }
 
-    public async Task<GooglePlaceDetailsResponse> GetPlaceDetailsAsync(string placeId)
-    {
-        var url = $"{BaseUrl}/details/json?place_id={Uri.EscapeDataString(placeId)}&fields=place_id,name,formatted_address,geometry,formatted_phone_number,website,types&key={_apiKey}";
-
-        var response = await httpClient.GetAsync(url);
-        response.EnsureSuccessStatusCode();
-
-        var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<GooglePlaceDetailsResponse>(content, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        return result ?? new GooglePlaceDetailsResponse();
-    }
-
     public async Task<GooglePlacesAutocompleteResponse> AutocompleteAsync(string input, double? latitude = null, double? longitude = null)
     {
         var url = $"{BaseUrl}/autocomplete/json?input={Uri.EscapeDataString(input)}&key={_apiKey}";
@@ -79,6 +63,8 @@ public class GooglePlace
     public string Place_Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Formatted_Address { get; set; } = string.Empty;
+    public string? Formatted_Phone_Number { get; set; }
+    public string? Website { get; set; }
     public GoogleGeometry? Geometry { get; set; }
     public List<string> Types { get; set; } = [];
 }
@@ -92,23 +78,6 @@ public class GoogleLocation
 {
     public double Lat { get; set; }
     public double Lng { get; set; }
-}
-
-public class GooglePlaceDetailsResponse
-{
-    public GooglePlaceDetails? Result { get; set; }
-    public string Status { get; set; } = string.Empty;
-}
-
-public class GooglePlaceDetails
-{
-    public string Place_Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Formatted_Address { get; set; } = string.Empty;
-    public string? Formatted_Phone_Number { get; set; }
-    public string? Website { get; set; }
-    public GoogleGeometry? Geometry { get; set; }
-    public List<string> Types { get; set; } = [];
 }
 
 public class GooglePlacesAutocompleteResponse

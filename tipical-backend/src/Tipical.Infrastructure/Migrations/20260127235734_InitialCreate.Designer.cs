@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tipical.Core.Models;
 using Tipical.Infrastructure.Data;
@@ -14,7 +13,7 @@ using Tipical.Infrastructure.Data;
 namespace Tipical.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260127075101_InitialCreate")]
+    [Migration("20260127235734_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -26,7 +25,6 @@ namespace Tipical.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "tipping_policy", new[] { "no_tips", "tips_exclude_tax", "tips_include_tax" });
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Tipical.Core.Models.Business", b =>
@@ -36,65 +34,16 @@ namespace Tipical.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("address");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
                     b.Property<string>("GooglePlaceId")
+                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("google_place_id");
 
-                    b.Property<decimal>("Latitude")
-                        .HasColumnType("decimal(10,7)")
-                        .HasColumnName("latitude");
-
-                    b.Property<Point>("Location")
-                        .HasColumnType("geography (point, 4326)")
-                        .HasColumnName("location");
-
-                    b.Property<decimal>("Longitude")
-                        .HasColumnType("decimal(10,7)")
-                        .HasColumnName("longitude");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("phone");
-
-                    b.PrimitiveCollection<string[]>("PlaceTypes")
-                        .HasColumnType("text[]")
-                        .HasColumnName("place_types");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Website")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("website");
-
                     b.HasKey("Id");
 
                     b.HasIndex("GooglePlaceId")
-                        .IsUnique()
-                        .HasFilter("google_place_id IS NOT NULL");
+                        .IsUnique();
 
                     b.ToTable("businesses", (string)null);
                 });

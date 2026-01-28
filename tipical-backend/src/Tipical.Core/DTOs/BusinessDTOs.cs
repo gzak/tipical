@@ -24,11 +24,3 @@ public class BusinessResponse
     public TippingPolicy? WinningPolicy { get; set; }
     public int? WinningPolicyVoteCount { get; set; }
 }
-
-public class NearbyBusinessesRequest
-{
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-    public int Radius { get; set; } = 5000; // meters
-    public string? Type { get; set; }
-}

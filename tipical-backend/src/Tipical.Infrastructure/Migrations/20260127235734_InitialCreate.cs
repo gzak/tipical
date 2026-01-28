@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
-using NetTopologySuite.Geometries;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Tipical.Core.Models;
 
 #nullable disable
@@ -13,25 +13,14 @@ namespace Tipical.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
-                .Annotation("Npgsql:Enum:tipping_policy", "no_tips,tips_exclude_tax,tips_include_tax")
-                .Annotation("Npgsql:PostgresExtension:postgis", ",,");
+                .Annotation("Npgsql:Enum:tipping_policy", "no_tips,tips_exclude_tax,tips_include_tax");
 
             migrationBuilder.CreateTable(
                 name: "businesses",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    google_place_id = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    address = table.Column<string>(type: "text", nullable: false),
-                    latitude = table.Column<decimal>(type: "numeric(10,7)", nullable: false),
-                    longitude = table.Column<decimal>(type: "numeric(10,7)", nullable: false),
-                    location = table.Column<Point>(type: "geography (point, 4326)", nullable: true),
-                    place_types = table.Column<string[]>(type: "text[]", nullable: true),
-                    phone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    website = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                    google_place_id = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -64,13 +53,12 @@ namespace Tipical.Infrastructure.Migrations
                 name: "IX_businesses_google_place_id",
                 table: "businesses",
                 column: "google_place_id",
-                unique: true,
-                filter: "google_place_id IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_tipping_votes_business_user",
                 table: "tipping_votes",
-                columns: ["business_id", "user_id"],
+                columns: new[] { "business_id", "user_id" },
                 unique: true);
         }
 

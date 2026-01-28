@@ -23,35 +23,4 @@ public class BusinessesController(BusinessService businessService, ILogger<Busin
         var results = await businessService.SearchBusinessesAsync(request);
         return Ok(results);
     }
-
-    [HttpGet("{id}")]
-    [ProducesResponseType(typeof(BusinessResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<BusinessResponse>> GetById(Guid id)
-    {
-        var business = await businessService.GetBusinessByIdAsync(id);
-
-        if (business == null)
-        {
-            return NotFound(new { message = $"Business with ID {id} not found" });
-        }
-
-        return Ok(business);
-    }
-
-    [HttpGet("nearby")]
-    [ProducesResponseType(typeof(List<BusinessResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<BusinessResponse>>> GetNearby([FromQuery] double latitude, [FromQuery] double longitude, [FromQuery] int radius = 5000, [FromQuery] string? type = null)
-    {
-        var request = new NearbyBusinessesRequest
-        {
-            Latitude = latitude,
-            Longitude = longitude,
-            Radius = radius,
-            Type = type
-        };
-
-        var results = await businessService.GetNearbyBusinessesAsync(request);
-        return Ok(results);
-    }
 }

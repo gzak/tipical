@@ -44,23 +44,22 @@ public class TippingController(TippingService tippingService, ILogger<TippingCon
     [HttpPut("votes/{businessId}")]
     [Authorize]
     [ProducesResponseType(typeof(TippingVoteResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TippingVoteResponse>> SubmitVote(Guid businessId, [FromBody] TippingVoteRequest request)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized(new { message = "User ID not found in token" });
         }
 
-        try
+        if (string.IsNullOrEmpty(request.GooglePlaceId))
         {
-            var vote = await tippingService.SubmitVoteAsync(businessId, userId, request.TippingPolicy);
-            return Ok(vote);
+            return BadRequest(new { message = "GooglePlaceId is required" });
         }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+
+        var vote = await tippingService.SubmitVoteAsync(businessId, userId, request.TippingPolicy, request.GooglePlaceId);
+        return Ok(vote);
     }
 }

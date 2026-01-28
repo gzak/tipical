@@ -18,56 +18,11 @@ public class BusinessConfiguration : IEntityTypeConfiguration<Business>
 
         builder.Property(b => b.GooglePlaceId)
             .HasColumnName("google_place_id")
-            .HasMaxLength(255);
+            .HasMaxLength(255)
+            .IsRequired();
 
         builder.HasIndex(b => b.GooglePlaceId)
-            .IsUnique()
-            .HasFilter("google_place_id IS NOT NULL");
-
-        builder.Property(b => b.Name)
-            .HasColumnName("name")
-            .HasMaxLength(500)
-            .IsRequired();
-
-        builder.Property(b => b.Address)
-            .HasColumnName("address")
-            .HasColumnType("text")
-            .IsRequired();
-
-        builder.Property(b => b.Latitude)
-            .HasColumnName("latitude")
-            .HasColumnType("decimal(10,7)")
-            .IsRequired();
-
-        builder.Property(b => b.Longitude)
-            .HasColumnName("longitude")
-            .HasColumnType("decimal(10,7)")
-            .IsRequired();
-
-        // PostGIS geography point for spatial queries
-        builder.Property(b => b.Location)
-            .HasColumnName("location")
-            .HasColumnType("geography (point, 4326)");
-
-        builder.Property(b => b.PlaceTypes)
-            .HasColumnName("place_types")
-            .HasColumnType("text[]");
-
-        builder.Property(b => b.Phone)
-            .HasColumnName("phone")
-            .HasMaxLength(50);
-
-        builder.Property(b => b.Website)
-            .HasColumnName("website")
-            .HasMaxLength(500);
-
-        builder.Property(b => b.CreatedAt)
-            .HasColumnName("created_at")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-        builder.Property(b => b.UpdatedAt)
-            .HasColumnName("updated_at")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            .IsUnique();
 
         builder.HasMany(b => b.TippingVotes)
             .WithOne(tv => tv.Business)
