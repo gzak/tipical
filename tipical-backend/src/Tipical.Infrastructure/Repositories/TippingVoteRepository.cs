@@ -1,3 +1,4 @@
+using FlexLabs.EntityFrameworkCore.Upsert;
 using Microsoft.EntityFrameworkCore;
 using Tipical.Core.Interfaces;
 using Tipical.Core.Models;
@@ -22,32 +23,29 @@ public class TippingVoteRepository(ApplicationDbContext context) : ITippingVoteR
 
     public async Task<TippingVote> UpsertAsync(Guid businessId, string userId, TippingPolicy policy)
     {
-        var existingVote = await GetByBusinessAndUserAsync(businessId, userId);
+        var now = DateTime.UtcNow;
 
-        if (existingVote != null)
-        {
-            // Update existing vote
-            existingVote.TippingPolicy = policy;
-            existingVote.UpdatedAt = DateTime.UtcNow;
-            context.TippingVotes.Update(existingVote);
-        }
-        else
-        {
-            // Create new vote
-            existingVote = new TippingVote
+        await context.TippingVotes
+            .Upsert(new TippingVote
             {
                 Id = Guid.NewGuid(),
                 BusinessId = businessId,
                 UserId = userId,
                 TippingPolicy = policy,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-            context.TippingVotes.Add(existingVote);
-        }
+                CreatedAt = now,
+                UpdatedAt = now
+            })
+            .On(v => new { v.BusinessId, v.UserId })
+            .WhenMatched(v => new TippingVote
+            {
+                TippingPolicy = policy,
+                UpdatedAt = now
+            })
+            .RunAsync();
 
-        await context.SaveChangesAsync();
-        return existingVote;
+        // Retrieve the upserted vote to return
+        var vote = await GetByBusinessAndUserAsync(businessId, userId);
+        return vote!;
     }
 
     public async Task<Dictionary<TippingPolicy, int>> GetVoteCountsByPolicyAsync(Guid businessId)
