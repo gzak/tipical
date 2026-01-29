@@ -1,10 +1,11 @@
 using Tipical.Core.DTOs;
-using Tipical.Core.Interfaces;
+using Tipical.Core.Repositories;
 using Tipical.Core.Models;
+using Tipical.Core.Services;
 
 namespace Tipical.Infrastructure.Services;
 
-public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusinessRepository businessRepository)
+public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusinessRepository businessRepository) : ITippingService
 {
     public async Task<TippingVoteResponse> SubmitVoteAsync(Guid businessId, string userId, TippingPolicy policy, string googlePlaceId)
     {

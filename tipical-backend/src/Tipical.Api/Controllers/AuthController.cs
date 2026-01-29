@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Tipical.Core.DTOs;
-using Tipical.Infrastructure.Services;
+using Tipical.Core.Services;
 
 namespace Tipical.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
-public class AuthController(GoogleAuthService googleAuthService, ILogger<AuthController> logger) : ControllerBase
+public class AuthController(IGoogleAuthService googleAuthService, ILogger<AuthController> logger) : ControllerBase
 {
     [HttpPost("google")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]

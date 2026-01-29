@@ -1,10 +1,11 @@
 using Google.Maps.Places.V1;
 using Google.Type;
 using Microsoft.Extensions.Configuration;
+using Tipical.Core.Services;
 
 namespace Tipical.Infrastructure.Services;
 
-public class GooglePlacesService
+public class GooglePlacesService : IGooglePlacesService
 {
     private readonly PlacesClient _client;
 

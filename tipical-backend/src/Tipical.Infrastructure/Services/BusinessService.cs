@@ -1,14 +1,15 @@
 using Google.Maps.Places.V1;
 using Tipical.Core.DTOs;
-using Tipical.Core.Interfaces;
+using Tipical.Core.Repositories;
 using Tipical.Core.Models;
+using Tipical.Core.Services;
 
 namespace Tipical.Infrastructure.Services;
 
 public class BusinessService(
     IBusinessRepository businessRepository,
     ITippingVoteRepository tippingVoteRepository,
-    GooglePlacesService googlePlacesService)
+    IGooglePlacesService googlePlacesService) : IBusinessService
 {
     public async Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request)
     {

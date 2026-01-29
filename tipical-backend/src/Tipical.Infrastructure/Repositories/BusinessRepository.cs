@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Tipical.Core.Interfaces;
+using Tipical.Core.Repositories;
 using Tipical.Core.Models;
 using Tipical.Infrastructure.Data;
 

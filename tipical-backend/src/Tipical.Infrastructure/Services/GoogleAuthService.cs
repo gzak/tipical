@@ -5,10 +5,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Tipical.Core.DTOs;
+using Tipical.Core.Services;
 
 namespace Tipical.Infrastructure.Services;
 
-public class GoogleAuthService(IConfiguration configuration)
+public class GoogleAuthService(IConfiguration configuration) : IGoogleAuthService
 {
     private readonly string _googleClientId = configuration["GoogleOAuth:ClientId"] ?? throw new InvalidOperationException("Google OAuth Client ID not configured");
     private readonly string _jwtSecret = configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");

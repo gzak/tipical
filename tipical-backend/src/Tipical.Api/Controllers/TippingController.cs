@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Tipical.Core.DTOs;
-using Tipical.Infrastructure.Services;
+using Tipical.Core.Services;
 
 namespace Tipical.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/tipping")]
-public class TippingController(TippingService tippingService, ILogger<TippingController> logger) : ControllerBase
+public class TippingController(ITippingService tippingService, ILogger<TippingController> logger) : ControllerBase
 {
     [HttpGet("votes/{businessId}")]
     [ProducesResponseType(typeof(TippingVotesAggregateResponse), StatusCodes.Status200OK)]

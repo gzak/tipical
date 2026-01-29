@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Tipical.Core.DTOs;
-using Tipical.Infrastructure.Services;
+using Tipical.Core.Services;
 
 namespace Tipical.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/businesses")]
-public class BusinessesController(BusinessService businessService, ILogger<BusinessesController> logger) : ControllerBase
+public class BusinessesController(IBusinessService businessService, ILogger<BusinessesController> logger) : ControllerBase
 {
     [HttpGet("search")]
     [ProducesResponseType(typeof(List<BusinessResponse>), StatusCodes.Status200OK)]

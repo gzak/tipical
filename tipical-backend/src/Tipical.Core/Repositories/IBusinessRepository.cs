@@ -1,6 +1,6 @@
 using Tipical.Core.Models;
 
-namespace Tipical.Core.Interfaces;
+namespace Tipical.Core.Repositories;
 
 public interface IBusinessRepository
 {

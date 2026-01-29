@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Tipical.Core.Interfaces;
+using Tipical.Core.Repositories;
+using Tipical.Core.Services;
 using Tipical.Core.Models;
 using Tipical.Infrastructure.Data;
 using Tipical.Infrastructure.Repositories;
@@ -63,10 +64,10 @@ builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
 builder.Services.AddScoped<ITippingVoteRepository, TippingVoteRepository>();
 
 // Register services
-builder.Services.AddScoped<GooglePlacesService>();
-builder.Services.AddScoped<GoogleAuthService>();
-builder.Services.AddScoped<BusinessService>();
-builder.Services.AddScoped<TippingService>();
+builder.Services.AddScoped<IGooglePlacesService, GooglePlacesService>();
+builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<IBusinessService, BusinessService>();
+builder.Services.AddScoped<ITippingService, TippingService>();
 
 var app = builder.Build();
 
