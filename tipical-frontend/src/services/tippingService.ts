@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import { TippingVote, TippingVotesAggregate, TippingVoteRequest } from '../types';
+import type { TippingVote, TippingVotesAggregate, TippingVoteRequest } from '../types';
 
 export const tippingService = {
   async getVotes(businessId: string): Promise<TippingVotesAggregate> {

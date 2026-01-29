@@ -1,8 +1,10 @@
-export enum TippingPolicy {
-  NoTips = 0,
-  TipsExcludeTax = 1,
-  TipsIncludeTax = 2,
-}
+export const TippingPolicy = {
+  NoTips: 0,
+  TipsExcludeTax: 1,
+  TipsIncludeTax: 2,
+} as const;
+
+export type TippingPolicy = typeof TippingPolicy[keyof typeof TippingPolicy];
 
 export interface Business {
   id: string;

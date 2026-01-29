@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import { Business } from '../types';
+import type { Business } from '../types';
 
 export const businessService = {
   async search(query: string, latitude?: number, longitude?: number, radius = 5000): Promise<Business[]> {

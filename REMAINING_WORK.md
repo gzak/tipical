@@ -8,35 +8,39 @@ This document tracks all remaining implementation tasks for the Tipical applicat
 ## Frontend Components
 
 ### 1. React Query Setup
-**Status**: ⏳ Not Started
+**Status**: ✅ Complete
 **Priority**: High
-**Location**: `src/main.tsx` or `src/App.tsx`
+**Location**: `src/main.tsx`
 
 **Tasks**:
-- [ ] Install `@tanstack/react-query` (already installed)
-- [ ] Create `QueryClient` instance
-- [ ] Wrap app with `QueryClientProvider`
-- [ ] Add React Query DevTools (optional, for development)
-- [ ] Configure default query options (staleTime, cacheTime, retry)
+- [x] Install `@tanstack/react-query` (already installed)
+- [x] Install `@tanstack/react-query-devtools`
+- [x] Create `QueryClient` instance
+- [x] Wrap app with `QueryClientProvider`
+- [x] Add React Query DevTools (for development)
+- [x] Configure default query options (staleTime: 5min, gcTime: 10min, retry: 1)
 
-**Files to Create**:
-- None (configuration in existing files)
+**Files Modified**:
+- `src/main.tsx` - Added QueryClient configuration and provider
 
 ---
 
 ### 2. Google OAuth Provider Setup
-**Status**: ⏳ Not Started
+**Status**: ✅ Complete
 **Priority**: High
-**Location**: `src/main.tsx` or `src/App.tsx`
+**Location**: `src/main.tsx`
 
 **Tasks**:
-- [ ] Install `@react-oauth/google` (already installed)
-- [ ] Wrap app with `GoogleOAuthProvider`
-- [ ] Configure with `VITE_GOOGLE_OAUTH_CLIENT_ID`
-- [ ] Ensure proper provider nesting (GoogleOAuth → QueryClient → App)
+- [x] Install `@react-oauth/google` (already installed)
+- [x] Wrap app with `GoogleOAuthProvider`
+- [x] Configure with `VITE_GOOGLE_OAUTH_CLIENT_ID`
+- [x] Ensure proper provider nesting (GoogleOAuth → QueryClient → App)
+- [x] Add environment variable validation
 
-**Files to Modify**:
-- `src/main.tsx`
+**Files Modified**:
+- `src/main.tsx` - Added GoogleOAuthProvider wrapper
+- `src/types/index.ts` - Fixed TypeScript enum to use const object pattern for compatibility with `erasableSyntaxOnly`
+- `src/services/*.ts` - Updated imports to use type-only imports for `verbatimModuleSyntax`
 
 ---
 
@@ -616,16 +620,17 @@ SELECT * FROM businesses WHERE ST_DWithin(location, ST_MakePoint(-122.4194, 37.7
 
 ### High Priority (Must-Have for MVP)
 1. ✅ Backend API (100% complete)
-2. ⏳ React Query setup
-3. ⏳ Google OAuth components
-4. ⏳ Google Maps integration
-5. ⏳ Search functionality
-6. ⏳ Business detail panel
-7. ⏳ Tipping policy display & selector
-8. ⏳ Main App layout
-9. ⏳ Frontend Dockerfile
-10. ⏳ Google Cloud setup guide
-11. ⏳ End-to-end testing
+2. ✅ React Query setup (complete)
+3. ✅ Google OAuth provider setup (complete)
+4. ⏳ Google OAuth components (login modal, user profile)
+5. ⏳ Google Maps integration
+6. ⏳ Search functionality
+7. ⏳ Business detail panel
+8. ⏳ Tipping policy display & selector
+9. ⏳ Main App layout
+10. ⏳ Frontend Dockerfile
+11. ⏳ Google Cloud setup guide
+12. ⏳ End-to-end testing
 
 ### Medium Priority (Important for Production)
 12. ⏳ Common UI components
