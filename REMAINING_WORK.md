@@ -84,23 +84,25 @@ This document tracks all remaining implementation tasks for the Tipical applicat
 ---
 
 ### 4. Common UI Components
-**Status**: ⏳ Not Started
+**Status**: ✅ Complete
 **Priority**: High
 **Location**: `src/components/common/`
 
 **Tasks**:
-- [ ] Create `Modal.tsx` (base modal component)
-- [ ] Create `Button.tsx` (reusable button with variants)
-- [ ] Create `Sidebar.tsx` (sliding panel for business details)
-- [ ] Create `Loading.tsx` (loading spinner)
-- [ ] Create `ErrorMessage.tsx` (error display component)
+- [x] Create `Modal.tsx` (base modal component with backdrop, ESC key support)
+- [x] Create `Button.tsx` (reusable button with variants: primary, secondary, danger, success, ghost)
+- [x] Create `Sidebar.tsx` (sliding panel with left/right positioning, multiple widths)
+- [x] Create `Loading.tsx` (loading spinner with size options and fullScreen mode)
+- [x] Create `ErrorMessage.tsx` (error display component with retry button)
+- [x] Create `index.ts` (barrel export for all common components)
 
-**Files to Create**:
-- `src/components/common/Modal.tsx`
-- `src/components/common/Button.tsx`
-- `src/components/common/Sidebar.tsx`
-- `src/components/common/Loading.tsx`
-- `src/components/common/ErrorMessage.tsx`
+**Files Created**:
+- `src/components/common/Button.tsx` - Reusable button with loading state and variants
+- `src/components/common/Modal.tsx` - Modal with ESC key, backdrop click, and customizable size
+- `src/components/common/Sidebar.tsx` - Sliding sidebar panel with smooth animations
+- `src/components/common/Loading.tsx` - Animated loading spinner component
+- `src/components/common/ErrorMessage.tsx` - Error display with icon and retry action
+- `src/components/common/index.ts` - Centralized exports for easy importing
 
 ---
 
@@ -633,12 +635,11 @@ SELECT * FROM businesses WHERE ST_DWithin(location, ST_MakePoint(-122.4194, 37.7
 12. ⏳ End-to-end testing
 
 ### Medium Priority (Important for Production)
-12. ⏳ Common UI components
-13. ⏳ Error handling
-14. ⏳ Loading states
-15. ⏳ Responsive design
-16. ⏳ Production configuration
-17. ⏳ Deployment guide
+12. ⏳ Error handling
+13. ⏳ Loading states
+14. ⏳ Responsive design
+15. ⏳ Production configuration
+16. ⏳ Deployment guide
 
 ### Low Priority (Nice-to-Have)
 18. ⏳ Performance optimizations
