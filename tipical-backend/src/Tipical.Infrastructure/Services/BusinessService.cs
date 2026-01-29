@@ -81,8 +81,8 @@ public class BusinessService(
             Name = place.DisplayName.Text,
             Address = place.FormattedAddress,
             PlaceTypes = [.. place.Types_],
-            Phone = place.InternationalPhoneNumber,
-            Website = place.WebsiteUri,
+            Phone = !string.IsNullOrWhiteSpace(place.InternationalPhoneNumber) ? place.InternationalPhoneNumber : null,
+            Website = !string.IsNullOrWhiteSpace(place.WebsiteUri) ? place.WebsiteUri : null,
             WinningPolicy = winningPolicy,
             WinningPolicyVoteCount = winningPolicyVoteCount
         };
