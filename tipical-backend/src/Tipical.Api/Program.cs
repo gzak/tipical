@@ -58,14 +58,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Register HttpClient for GooglePlacesService
-builder.Services.AddHttpClient<GooglePlacesService>();
-
 // Register repositories
 builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
 builder.Services.AddScoped<ITippingVoteRepository, TippingVoteRepository>();
 
 // Register services
+builder.Services.AddScoped<GooglePlacesService>();
 builder.Services.AddScoped<GoogleAuthService>();
 builder.Services.AddScoped<BusinessService>();
 builder.Services.AddScoped<TippingService>();
