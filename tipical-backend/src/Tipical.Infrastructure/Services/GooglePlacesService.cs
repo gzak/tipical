@@ -17,58 +17,44 @@ public class GooglePlacesService : IGooglePlacesService
         }.Build();
     }
 
-    public async Task<SearchTextResponse> SearchAsync(string query, double? latitude = null, double? longitude = null, int radius = 5000)
+    public async Task<SearchTextResponse> SearchAsync(string query, double latitude, double longitude, int radius)
     {
-        var request = new SearchTextRequest
+        return await _client.SearchTextAsync(new SearchTextRequest
         {
             TextQuery = query,
-            MaxResultCount = 20
-        };
-
-        // Add location bias if coordinates provided
-        if (latitude.HasValue && longitude.HasValue)
-        {
-            request.LocationBias = new SearchTextRequest.Types.LocationBias
+            MaxResultCount = 20,
+            LocationBias = new SearchTextRequest.Types.LocationBias
             {
                 Circle = new Circle
                 {
                     Center = new LatLng
                     {
-                        Latitude = latitude.Value,
-                        Longitude = longitude.Value
+                        Latitude = latitude,
+                        Longitude = longitude
                     },
                     Radius = radius
                 }
-            };
-        }
-
-        return await _client.SearchTextAsync(request);
+            }
+        });
     }
 
-    public async Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double? latitude = null, double? longitude = null)
+    public async Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double latitude, double longitude, int radius)
     {
-        var request = new AutocompletePlacesRequest
+        return await _client.AutocompletePlacesAsync(new AutocompletePlacesRequest
         {
-            Input = input
-        };
-
-        // Add location bias if coordinates provided
-        if (latitude.HasValue && longitude.HasValue)
-        {
-            request.LocationBias = new AutocompletePlacesRequest.Types.LocationBias
+            Input = input,
+            LocationBias = new AutocompletePlacesRequest.Types.LocationBias
             {
                 Circle = new Circle
                 {
                     Center = new LatLng
                     {
-                        Latitude = latitude.Value,
-                        Longitude = longitude.Value
+                        Latitude = latitude,
+                        Longitude = longitude
                     },
-                    Radius = 50000
+                    Radius = radius
                 }
-            };
-        }
-
-        return await _client.AutocompletePlacesAsync(request);
+            }
+        });
     }
 }

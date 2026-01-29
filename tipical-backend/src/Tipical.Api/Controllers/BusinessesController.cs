@@ -10,7 +10,7 @@ public class BusinessesController(IBusinessService businessService, ILogger<Busi
 {
     [HttpGet("search")]
     [ProducesResponseType(typeof(List<BusinessResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<BusinessResponse>>> Search([FromQuery] string query, [FromQuery] double? latitude, [FromQuery] double? longitude, [FromQuery] int radius = 5000)
+    public async Task<ActionResult<List<BusinessResponse>>> Search([FromQuery] string query, [FromQuery] double latitude, [FromQuery] double longitude, [FromQuery] int radius)
     {
         var request = new BusinessSearchRequest
         {

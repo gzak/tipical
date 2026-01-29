@@ -4,9 +4,9 @@ namespace Tipical.Core.DTOs;
 
 public class BusinessSearchRequest
 {
-    public string Query { get; set; } = string.Empty;
-    public double? Latitude { get; set; }
-    public double? Longitude { get; set; }
+    public required string Query { get; set; }
+    public double Latitude { get; set; } = 47.6243; // Seattle default
+    public double Longitude { get; set; } = 122.321; // Seattle default
     public int Radius { get; set; } = 5000; // meters
 }
 
