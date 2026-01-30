@@ -58,3 +58,9 @@ export interface GoogleAuthRequest {
 export interface TippingVoteRequest {
   tippingPolicy: TippingPolicy;
 }
+
+export interface CredentialResponse {
+  credential?: string;
+  select_by?: string;
+  clientId?: string;
+}
