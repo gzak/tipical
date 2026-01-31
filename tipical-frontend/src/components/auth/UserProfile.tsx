@@ -50,7 +50,7 @@ export const UserProfile = () => {
       'bg-purple-500',
       'bg-pink-500',
       'bg-yellow-500',
-      'bg-indigo-500',
+      'bg-orange-400',
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
