@@ -45,23 +45,25 @@ This document tracks all remaining implementation tasks for the Tipical applicat
 ---
 
 ### 3. Authentication Components
-**Status**: ⏳ Not Started
+**Status**: ✅ Complete
 **Priority**: High
 **Location**: `src/components/auth/`
 
 #### 3.1 GoogleAuthModal Component
 **Tasks**:
-- [ ] Create modal component using `@react-oauth/google`
-- [ ] Add `GoogleLogin` button
-- [ ] Handle successful login callback
-- [ ] Exchange Google token for JWT via backend
-- [ ] Update authStore with token and user info
-- [ ] Handle errors gracefully
-- [ ] Close modal on success
-- [ ] Style with Tailwind CSS
+- [x] Create modal component using `@react-oauth/google`
+- [x] Add `GoogleLogin` button
+- [x] Handle successful login callback
+- [x] Exchange Google token for JWT via backend
+- [x] Update authStore with token and user info
+- [x] Handle errors gracefully
+- [x] Close modal on success
+- [x] Style with Tailwind CSS
 
-**Files to Create**:
-- `src/components/auth/GoogleAuthModal.tsx`
+**Files Created**:
+- `src/components/auth/GoogleAuthModal.tsx` ✅
+- `src/hooks/useClickOutside.ts` ✅
+- `src/types/index.ts` - Added CredentialResponse type ✅
 
 **Dependencies**:
 - `@react-oauth/google`
@@ -71,15 +73,16 @@ This document tracks all remaining implementation tasks for the Tipical applicat
 
 #### 3.2 UserProfile Component
 **Tasks**:
-- [ ] Create user avatar dropdown component
-- [ ] Display user name, email, and picture
-- [ ] Add "Sign Out" button
-- [ ] Handle sign out (clear authStore)
-- [ ] Position in top-right corner
-- [ ] Responsive design for mobile
+- [x] Create user avatar dropdown component
+- [x] Display user name, email, and picture
+- [x] Add "Sign Out" button
+- [x] Handle sign out (clear authStore)
+- [x] Position in top-right corner
+- [x] Responsive design for mobile
 
-**Files to Create**:
-- `src/components/auth/UserProfile.tsx`
+**Files Created**:
+- `src/components/auth/UserProfile.tsx` ✅
+- `src/components/auth/index.ts` ✅
 
 ---
 
