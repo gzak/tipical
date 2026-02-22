@@ -19,14 +19,16 @@ export function useTippingData(businessId: string | null) {
     enabled: Boolean(businessId) && isAuthenticated,
   });
 
-  const submitVoteMutation = useMutation<TippingVote, Error, TippingPolicy>({
-    mutationFn: (policy: TippingPolicy) => {
-      if (!businessId) return Promise.reject(new Error('No business selected'));
-      return tippingService.submitVote(businessId, { tippingPolicy: policy });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', businessId] });
-      queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', businessId] });
+  const submitVoteMutation = useMutation<
+    TippingVote,
+    Error,
+    { policy: TippingPolicy; businessId: string }
+  >({
+    mutationFn: ({ policy, businessId: id }) =>
+      tippingService.submitVote(id, { tippingPolicy: policy }),
+    onSuccess: (_data, { businessId: id }) => {
+      queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', id] });
+      queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', id] });
     },
   });
 
@@ -35,7 +37,10 @@ export function useTippingData(businessId: string | null) {
     userVote: userVoteQuery.data ?? null,
     isLoading: votesQuery.isLoading || userVoteQuery.isLoading,
     error: votesQuery.error ?? userVoteQuery.error,
-    submitVote: submitVoteMutation.mutate,
+    submitVote: (policy: TippingPolicy) => {
+      if (!businessId) return;
+      submitVoteMutation.mutate({ policy, businessId });
+    },
     isSubmitting: submitVoteMutation.isPending,
     submitError: submitVoteMutation.error,
   };
