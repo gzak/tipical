@@ -32,10 +32,7 @@ export function useBusinessSearch({
           radius
         );
       }
-      if (hasLocation) {
-        return businessService.getNearby(latitude!, longitude!, radius);
-      }
-      return Promise.resolve([]);
+      return businessService.getNearby(latitude!, longitude!, radius);
     },
     enabled: hasQuery || hasLocation,
   });
