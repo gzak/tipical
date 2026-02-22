@@ -18,8 +18,11 @@ export function useBusinessSearch({
   const hasQuery = Boolean(query && query.trim().length > 0);
   const hasLocation = latitude != null && longitude != null;
 
+  const roundedLat = latitude != null ? Math.round(latitude * 1e4) / 1e4 : null;
+  const roundedLng = longitude != null ? Math.round(longitude * 1e4) / 1e4 : null;
+
   return useQuery<Business[]>({
-    queryKey: ['businesses', 'search', { query, latitude, longitude, radius }],
+    queryKey: ['businesses', 'search', { query, latitude: roundedLat, longitude: roundedLng, radius }],
     queryFn: () => {
       if (hasQuery) {
         return businessService.search(
