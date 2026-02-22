@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tippingService } from '../services/tippingService';
+import { useAuthStore } from '../stores/authStore';
 import type { TippingVote, TippingVotesAggregate, TippingPolicy } from '../types';
 
 export function useTippingData(businessId: string | null) {
   const queryClient = useQueryClient();
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated());
 
   const votesQuery = useQuery<TippingVotesAggregate>({
     queryKey: ['tipping', 'votes', businessId],
@@ -14,7 +16,7 @@ export function useTippingData(businessId: string | null) {
   const userVoteQuery = useQuery<TippingVote | null>({
     queryKey: ['tipping', 'userVote', businessId],
     queryFn: () => tippingService.getUserVote(businessId!),
-    enabled: Boolean(businessId),
+    enabled: Boolean(businessId) && isAuthenticated,
   });
 
   const submitVoteMutation = useMutation<TippingVote, Error, TippingPolicy>({
