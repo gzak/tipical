@@ -20,8 +20,10 @@ export function useTippingData(businessId: string | null) {
   });
 
   const submitVoteMutation = useMutation<TippingVote, Error, TippingPolicy>({
-    mutationFn: (policy: TippingPolicy) =>
-      tippingService.submitVote(businessId!, { tippingPolicy: policy }),
+    mutationFn: (policy: TippingPolicy) => {
+      if (!businessId) return Promise.reject(new Error('No business selected'));
+      return tippingService.submitVote(businessId, { tippingPolicy: policy });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', businessId] });
       queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', businessId] });
