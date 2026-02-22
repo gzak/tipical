@@ -24,7 +24,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
   const [state, setState] = useState<GeolocationState>({
     position: null,
     error: null,
-    isLoading: true,
+    isLoading: !!navigator.geolocation,
   });
 
   useEffect(() => {
