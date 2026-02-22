@@ -21,25 +21,17 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     watch = false,
   } = options;
 
+  const isSupported = !!navigator.geolocation;
+
   const [state, setState] = useState<GeolocationState>({
     position: null,
     error: null,
-    isLoading: !!navigator.geolocation,
+    isLoading: isSupported,
   });
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setState({
-        position: null,
-        error: {
-          code: 2,
-          message: 'Geolocation is not supported by this browser.',
-          PERMISSION_DENIED: 1,
-          POSITION_UNAVAILABLE: 2,
-          TIMEOUT: 3,
-        } as GeolocationPositionError,
-        isLoading: false,
-      });
+      setState(prev => ({ ...prev, isLoading: false }));
       return;
     }
 
@@ -62,6 +54,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
   }, [enableHighAccuracy, timeout, maximumAge, watch]);
 
   return {
+    isSupported,
     latitude: state.position?.coords.latitude ?? null,
     longitude: state.position?.coords.longitude ?? null,
     accuracy: state.position?.coords.accuracy ?? null,
