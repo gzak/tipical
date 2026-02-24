@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface GeolocationState {
   position: GeolocationPosition | null;
@@ -11,6 +11,8 @@ interface UseGeolocationOptions {
   timeout?: number;
   maximumAge?: number;
   watch?: boolean;
+  /** When true, requests location immediately on mount. Default: false. */
+  enabled?: boolean;
 }
 
 export function useGeolocation(options: UseGeolocationOptions = {}) {
@@ -19,6 +21,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     timeout = 10000,
     maximumAge = 0,
     watch = false,
+    enabled = false,
   } = options;
 
   const isSupported = !!navigator.geolocation;
@@ -26,14 +29,21 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
   const [state, setState] = useState<GeolocationState>({
     position: null,
     error: null,
-    isLoading: isSupported,
+    isLoading: false,
   });
 
+  // Tracks whether a location request has been initiated (either via enabled:true or requestLocation())
+  const [requested, setRequested] = useState(enabled);
+
   useEffect(() => {
+    if (!requested) return;
+
     if (!navigator.geolocation) {
       setState(prev => ({ ...prev, isLoading: false }));
       return;
     }
+
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     const positionOptions: PositionOptions = { enableHighAccuracy, timeout, maximumAge };
 
@@ -51,7 +61,12 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     } else {
       navigator.geolocation.getCurrentPosition(onSuccess, onError, positionOptions);
     }
-  }, [enableHighAccuracy, timeout, maximumAge, watch]);
+  }, [requested, enableHighAccuracy, timeout, maximumAge, watch]);
+
+  /** Trigger a GPS location request. No-op if geolocation is unsupported. */
+  const requestLocation = useCallback(() => {
+    if (isSupported) setRequested(true);
+  }, [isSupported]);
 
   return {
     isSupported,
@@ -60,5 +75,6 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     accuracy: state.position?.coords.accuracy ?? null,
     error: state.error,
     isLoading: state.isLoading,
+    requestLocation,
   };
 }
