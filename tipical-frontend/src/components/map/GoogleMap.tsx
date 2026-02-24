@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GoogleMap as GoogleMapBase, Marker, useLoadScript } from '@react-google-maps/api';
 import { useMapStore } from '../../stores/mapStore';
 import { useUIStore } from '../../stores/uiStore';
-import { useGeolocation } from '../../hooks';
+import { useGeolocation, useIpGeolocation } from '../../hooks';
 import type { Business } from '../../types';
 import { BusinessMarker } from './BusinessMarker';
 
@@ -31,11 +31,47 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
 
   const center = useMapStore(s => s.center);
   const zoom = useMapStore(s => s.zoom);
+  const setCenter = useMapStore(s => s.setCenter);
   const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
 
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
 
-  const { isSupported, latitude, longitude } = useGeolocation();
+  // Approximate location from the user's IP — no permission required.
+  // Updates the map center to the user's city on first load.
+  const { data: ipLocation } = useIpGeolocation();
+
+  // Precise GPS location — only requested when the user clicks "My Location".
+  const { isSupported, latitude, longitude, isLoading: gpsLoading, requestLocation } = useGeolocation();
+
+  // Center the map on the IP location once when it first resolves.
+  const ipCenteredRef = useRef(false);
+  useEffect(() => {
+    if (ipLocation && !ipCenteredRef.current) {
+      ipCenteredRef.current = true;
+      setCenter(ipLocation);
+    }
+  }, [ipLocation, setCenter]);
+
+  // Center the map on GPS coordinates once when they first become available.
+  // Reset by handleMyLocation so repeated button presses re-center.
+  const gpsCenteredRef = useRef(false);
+  useEffect(() => {
+    if (latitude !== null && longitude !== null && !gpsCenteredRef.current) {
+      gpsCenteredRef.current = true;
+      setCenter({ lat: latitude, lng: longitude });
+    }
+  }, [latitude, longitude, setCenter]);
+
+  const handleMyLocation = useCallback(() => {
+    if (latitude !== null && longitude !== null) {
+      // GPS already acquired — just re-center without re-requesting.
+      setCenter({ lat: latitude, lng: longitude });
+    } else {
+      // First press — trigger the browser permission prompt and acquire GPS.
+      gpsCenteredRef.current = false;
+      requestLocation();
+    }
+  }, [latitude, longitude, setCenter, requestLocation]);
 
   const mapOptions = useMemo(
     () => ({
@@ -76,37 +112,68 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     );
   }
 
-  return (
-    <GoogleMapBase
-      mapContainerStyle={MAP_CONTAINER_STYLE}
-      center={center}
-      zoom={zoom}
-      options={mapOptions}
-      onClick={handleMapClick}
-    >
-      {/* User location blue dot */}
-      {isSupported && latitude !== null && longitude !== null && (
-        <Marker
-          position={{ lat: latitude, lng: longitude }}
-          icon={{
-            url: USER_LOCATION_ICON_URL,
-            scaledSize: new google.maps.Size(20, 20),
-          }}
-          title="Your location"
-          zIndex={1000}
-        />
-      )}
+  // google.maps is available from this point on
+  const userLocationIcon = {
+    url: USER_LOCATION_ICON_URL,
+    scaledSize: new google.maps.Size(20, 20),
+  };
 
-      {/* Business markers */}
-      {businesses.map(business => (
-        <BusinessMarker
-          key={business.id}
-          business={business}
-          isActive={activeMarkerId === business.id}
-          onMarkerClick={handleMarkerClick}
-          onInfoWindowClose={handleInfoWindowClose}
-        />
-      ))}
-    </GoogleMapBase>
+  return (
+    <div className="relative w-full h-full">
+      <GoogleMapBase
+        mapContainerStyle={MAP_CONTAINER_STYLE}
+        center={center}
+        zoom={zoom}
+        options={mapOptions}
+        onClick={handleMapClick}
+      >
+        {/* GPS user location blue dot — only shown after permission is granted */}
+        {latitude !== null && longitude !== null && (
+          <Marker
+            position={{ lat: latitude, lng: longitude }}
+            icon={userLocationIcon}
+            title="Your location"
+            zIndex={1000}
+          />
+        )}
+
+        {/* Business markers */}
+        {businesses.map(business => (
+          <BusinessMarker
+            key={business.id}
+            business={business}
+            isActive={activeMarkerId === business.id}
+            onMarkerClick={handleMarkerClick}
+            onInfoWindowClose={handleInfoWindowClose}
+          />
+        ))}
+      </GoogleMapBase>
+
+      {/* My Location button — mirrors Google Maps' own control */}
+      {isSupported && (
+        <button
+          onClick={handleMyLocation}
+          disabled={gpsLoading}
+          title="My location"
+          aria-label="Center map on my location"
+          className="absolute bottom-8 right-2.5 bg-white rounded-sm shadow-md p-2 hover:bg-gray-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          {gpsLoading ? (
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" aria-hidden="true" />
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-blue-600"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              {/* Material gps_fixed icon */}
+              <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
+            </svg>
+          )}
+        </button>
+      )}
+    </div>
   );
 }
