@@ -37,20 +37,17 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
 
   // Approximate location from the user's IP — no permission required.
-  // Updates the map center to the user's city on first load.
+  // Populates the store center on first resolve; map render is gated on center being set.
   const { data: ipLocation } = useIpGeolocation();
 
   // Precise GPS location — only requested when the user clicks "My Location".
   const { isSupported, latitude, longitude, isLoading: gpsLoading, requestLocation } = useGeolocation();
 
-  // Center the map on the IP location once when it first resolves.
-  const ipCenteredRef = useRef(false);
   useEffect(() => {
-    if (ipLocation && !ipCenteredRef.current) {
-      ipCenteredRef.current = true;
+    if (ipLocation && !center) {
       setCenter(ipLocation);
     }
-  }, [ipLocation, setCenter]);
+  }, [ipLocation, center, setCenter]);
 
   // Center the map on GPS coordinates once when they first become available.
   // Reset by handleMyLocation so repeated button presses re-center.
@@ -104,7 +101,7 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     );
   }
 
-  if (!isLoaded) {
+  if (!isLoaded || !center) {
     return (
       <div className="flex items-center justify-center w-full h-full bg-gray-100">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
