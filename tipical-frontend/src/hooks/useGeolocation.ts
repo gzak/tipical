@@ -11,8 +11,6 @@ interface UseGeolocationOptions {
   timeout?: number;
   maximumAge?: number;
   watch?: boolean;
-  /** When true, requests location immediately on mount. Default: false. */
-  enabled?: boolean;
 }
 
 export function useGeolocation(options: UseGeolocationOptions = {}) {
@@ -21,7 +19,6 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     timeout = 10000,
     maximumAge = 0,
     watch = false,
-    enabled = false,
   } = options;
 
   const isSupported = !!navigator.geolocation;
@@ -32,8 +29,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     isLoading: false,
   });
 
-  // Tracks whether a location request has been initiated (either via enabled:true or requestLocation())
-  const [requested, setRequested] = useState(enabled);
+  const [requested, setRequested] = useState(false);
 
   useEffect(() => {
     if (!requested) return;
