@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
+import type { CredentialResponse } from '@react-oauth/google';
 import axios from 'axios';
 import { Modal, Loading, ErrorMessage } from '../common';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { authService } from '../../services/authService';
-import type { CredentialResponse } from '../../types';
 
 export const GoogleAuthModal = () => {
   const showAuthModal = useUIStore((state) => state.showAuthModal);
