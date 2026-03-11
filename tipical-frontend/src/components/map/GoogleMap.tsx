@@ -38,6 +38,12 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
+  // Memoized after isLoaded so google.maps.Size is available; deps array is intentionally [isLoaded].
+  const userLocationIcon = useMemo(
+    () => isLoaded ? { url: USER_LOCATION_ICON_URL, scaledSize: new google.maps.Size(20, 20) } : null,
+    [isLoaded] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   // Approximate location from the user's IP — no permission required.
   // Populates the store center on first resolve; map render is gated on center being set.
   const { data: ipLocation } = useIpGeolocation();
@@ -123,12 +129,6 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     );
   }
 
-  // google.maps is available from this point on
-  const userLocationIcon = {
-    url: USER_LOCATION_ICON_URL,
-    scaledSize: new google.maps.Size(20, 20),
-  };
-
   return (
     <div className="relative w-full h-full">
       <GoogleMapBase
@@ -145,7 +145,7 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
         {latitude !== null && longitude !== null && (
           <Marker
             position={{ lat: latitude, lng: longitude }}
-            icon={userLocationIcon}
+            icon={userLocationIcon!}
             title="Your location"
             zIndex={1000}
           />
