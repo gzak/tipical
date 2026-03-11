@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Marker, InfoWindow } from '@react-google-maps/api';
 import type { Business, TippingPolicy as TippingPolicyType } from '../../types';
 import { TippingPolicy } from '../../types';
@@ -36,6 +36,11 @@ export function BusinessMarker({
     [business.latitude, business.longitude]
   );
 
+  const handleClick = useCallback(
+    () => onMarkerClick(business.id),
+    [onMarkerClick, business.id]
+  );
+
   const icon = useMemo(
     () => ({
       url: MARKER_ICON_URLS[business.winningPolicy ?? 'unknown'],
@@ -50,7 +55,7 @@ export function BusinessMarker({
         position={position}
         icon={icon}
         title={business.name}
-        onClick={() => onMarkerClick(business.id)}
+        onClick={handleClick}
       />
       {isActive && (
         <InfoWindow position={position} onCloseClick={onInfoWindowClose}>
