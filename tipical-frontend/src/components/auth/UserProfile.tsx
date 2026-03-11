@@ -36,13 +36,6 @@ export const UserProfile = () => {
     setIsDropdownOpen((prev) => !prev);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      toggleDropdown();
-    }
-  };
-
   // Generate fallback avatar color based on user name
   const getAvatarColor = (name: string) => {
     const colors = [
@@ -66,7 +59,6 @@ export const UserProfile = () => {
       {/* Avatar Button */}
       <button
         onClick={toggleDropdown}
-        onKeyDown={handleKeyDown}
         className={`
           flex items-center justify-center
           w-9 h-9 sm:w-10 sm:h-10
