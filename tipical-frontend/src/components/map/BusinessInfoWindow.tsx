@@ -44,6 +44,7 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
         </span>
       )}
       <button
+        aria-label={`View details for ${business.name}`}
         onClick={handleViewDetails}
         className="block w-full text-center text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline"
       >
