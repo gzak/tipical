@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface GeolocationState {
   position: GeolocationPosition | null;
@@ -26,14 +26,20 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
   const [state, setState] = useState<GeolocationState>({
     position: null,
     error: null,
-    isLoading: isSupported,
+    isLoading: false,
   });
 
+  const [requested, setRequested] = useState(false);
+
   useEffect(() => {
+    if (!requested) return;
+
     if (!navigator.geolocation) {
       setState(prev => ({ ...prev, isLoading: false }));
       return;
     }
+
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     const positionOptions: PositionOptions = { enableHighAccuracy, timeout, maximumAge };
 
@@ -51,7 +57,12 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     } else {
       navigator.geolocation.getCurrentPosition(onSuccess, onError, positionOptions);
     }
-  }, [enableHighAccuracy, timeout, maximumAge, watch]);
+  }, [requested, enableHighAccuracy, timeout, maximumAge, watch]);
+
+  /** Trigger a GPS location request. No-op if geolocation is unsupported. */
+  const requestLocation = useCallback(() => {
+    if (isSupported) setRequested(true);
+  }, [isSupported]);
 
   return {
     isSupported,
@@ -60,5 +71,6 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     accuracy: state.position?.coords.accuracy ?? null,
     error: state.error,
     isLoading: state.isLoading,
+    requestLocation,
   };
 }
