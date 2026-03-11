@@ -5,6 +5,7 @@ import { useClickOutside } from '../../hooks/useClickOutside';
 export const UserProfile = () => {
   const { user, isAuthenticated, clearAuth } = useAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(dropdownRef, () => setIsDropdownOpen(false));
@@ -78,32 +79,24 @@ export const UserProfile = () => {
         aria-expanded={isDropdownOpen}
         aria-haspopup="true"
       >
-        {user.picture ? (
+        {user.picture && !imgError ? (
           <img
             src={user.picture}
             alt={user.name}
             className="w-full h-full rounded-full object-cover"
-            onError={(e) => {
-              // Fallback to initials if image fails to load
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const fallback = target.nextElementSibling as HTMLElement;
-              if (fallback) {
-                fallback.style.display = 'flex';
-              }
-            }}
+            onError={() => setImgError(true)}
           />
-        ) : null}
-        <div
-          className={`
-            ${user.picture ? 'hidden' : 'flex'}
-            w-full h-full rounded-full items-center justify-center
-            text-white font-semibold text-sm
-            ${getAvatarColor(user.name)}
-          `}
-        >
-          {getInitials(user.name)}
-        </div>
+        ) : (
+          <div
+            className={`
+              flex w-full h-full rounded-full items-center justify-center
+              text-white font-semibold text-sm
+              ${getAvatarColor(user.name)}
+            `}
+          >
+            {getInitials(user.name)}
+          </div>
+        )}
       </button>
 
       {/* Dropdown Menu */}
