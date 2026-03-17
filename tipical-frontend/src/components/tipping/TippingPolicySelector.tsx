@@ -1,7 +1,7 @@
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useTippingData } from '../../hooks';
-import type { TippingPolicy as TippingPolicyType } from '../../types';
+import type { Business, TippingPolicy as TippingPolicyType } from '../../types';
 import { TippingPolicy } from '../../types';
 
 interface PolicyOption {
@@ -33,13 +33,13 @@ const POLICY_OPTIONS: PolicyOption[] = [
 ];
 
 interface TippingPolicySelectorProps {
-  businessId: string;
+  business: Pick<Business, 'id' | 'googlePlaceId'>;
 }
 
-export function TippingPolicySelector({ businessId }: TippingPolicySelectorProps) {
+export function TippingPolicySelector({ business }: TippingPolicySelectorProps) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated());
   const setShowAuthModal = useUIStore(s => s.setShowAuthModal);
-  const { userVote, submitVote, isSubmitting, submitError } = useTippingData(businessId);
+  const { userVote, submitVote, isSubmitting, submitError } = useTippingData(business.id, business.googlePlaceId);
 
   const handleVote = (policy: TippingPolicyType) => {
     if (!isAuthenticated) {
