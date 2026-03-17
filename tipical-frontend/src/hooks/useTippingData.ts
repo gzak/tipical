@@ -26,9 +26,14 @@ export function useTippingData(businessId: string | null, googlePlaceId?: string
   >({
     mutationFn: ({ policy, businessId: id, googlePlaceId: placeId }) =>
       tippingService.submitVote(id, { tippingPolicy: policy, googlePlaceId: placeId }),
-    onSuccess: (_data, { businessId: id }) => {
-      queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', id] });
-      queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', id] });
+    onSuccess: (data, { businessId: id }) => {
+      const resolvedId = data.businessId;
+      queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', resolvedId] });
+      queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', resolvedId] });
+      if (resolvedId !== id) {
+        queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', id] });
+        queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', id] });
+      }
     },
   });
 
