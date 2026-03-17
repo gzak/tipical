@@ -34,12 +34,13 @@ const POLICY_OPTIONS: PolicyOption[] = [
 
 interface TippingPolicySelectorProps {
   businessId: string;
+  googlePlaceId: string;
 }
 
-export function TippingPolicySelector({ businessId }: TippingPolicySelectorProps) {
+export function TippingPolicySelector({ businessId, googlePlaceId }: TippingPolicySelectorProps) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated());
   const setShowAuthModal = useUIStore(s => s.setShowAuthModal);
-  const { userVote, submitVote, isSubmitting, submitError } = useTippingData(businessId);
+  const { userVote, submitVote, isSubmitting, submitError } = useTippingData(businessId, googlePlaceId);
 
   const handleVote = (policy: TippingPolicyType) => {
     if (!isAuthenticated) {

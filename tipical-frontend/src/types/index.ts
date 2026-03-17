@@ -57,4 +57,5 @@ export interface GoogleAuthRequest {
 
 export interface TippingVoteRequest {
   tippingPolicy: TippingPolicy;
+  googlePlaceId: string;
 }
