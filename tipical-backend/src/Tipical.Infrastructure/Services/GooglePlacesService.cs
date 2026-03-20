@@ -38,6 +38,26 @@ public class GooglePlacesService : IGooglePlacesService
         });
     }
 
+    public async Task<SearchNearbyResponse> SearchNearbyAsync(double latitude, double longitude, int radius)
+    {
+        return await _client.SearchNearbyAsync(new SearchNearbyRequest
+        {
+            MaxResultCount = 20,
+            LocationRestriction = new SearchNearbyRequest.Types.LocationRestriction
+            {
+                Circle = new Circle
+                {
+                    Center = new LatLng
+                    {
+                        Latitude = latitude,
+                        Longitude = longitude
+                    },
+                    Radius = radius
+                }
+            }
+        });
+    }
+
     public async Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double latitude, double longitude, int radius)
     {
         return await _client.AutocompletePlacesAsync(new AutocompletePlacesRequest

@@ -23,17 +23,13 @@ export function useBusinessSearch({
 
   return useQuery<Business[]>({
     queryKey: ['businesses', 'search', { query, latitude: roundedLat, longitude: roundedLng, radius }],
-    queryFn: () => {
-      if (hasQuery) {
-        return businessService.search(
-          query!,
-          hasLocation ? latitude! : undefined,
-          hasLocation ? longitude! : undefined,
-          radius
-        );
-      }
-      return businessService.getNearby(latitude!, longitude!, radius);
-    },
+    queryFn: () =>
+      businessService.search(
+        hasQuery ? query : undefined,
+        hasLocation ? latitude! : undefined,
+        hasLocation ? longitude! : undefined,
+        radius
+      ),
     enabled: hasQuery || hasLocation,
   });
 }
