@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Sidebar } from '../common/Sidebar';
 import { TippingPolicyDisplay } from '../tipping/TippingPolicyDisplay';
@@ -13,34 +14,40 @@ export function BusinessDetailPanel() {
     }))
   );
 
+  // Preserve last business so content stays visible during the close animation
+  const [displayBusiness, setDisplayBusiness] = useState(selectedBusiness);
+  useEffect(() => {
+    if (selectedBusiness) setDisplayBusiness(selectedBusiness);
+  }, [selectedBusiness]);
+
   return (
     <Sidebar
       isOpen={showBusinessPanel}
       onClose={closeBusinessPanel}
-      title={selectedBusiness?.name}
+      title={displayBusiness?.name}
       width="md"
     >
-      {selectedBusiness && (
+      {displayBusiness && (
         <div className="space-y-6">
           {/* Business info */}
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">{selectedBusiness.address}</p>
-            {selectedBusiness.phone && (
-              <p className="text-sm text-gray-600">{selectedBusiness.phone}</p>
+            <p className="text-sm text-gray-600">{displayBusiness.address}</p>
+            {displayBusiness.phone && (
+              <p className="text-sm text-gray-600">{displayBusiness.phone}</p>
             )}
-            {selectedBusiness.website && (
+            {displayBusiness.website && (
               <a
-                href={selectedBusiness.website}
+                href={displayBusiness.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-600 hover:underline break-all"
               >
-                {selectedBusiness.website}
+                {displayBusiness.website}
               </a>
             )}
-            {selectedBusiness.placeTypes && selectedBusiness.placeTypes.length > 0 && (
+            {displayBusiness.placeTypes && displayBusiness.placeTypes.length > 0 && (
               <div className="flex flex-wrap gap-1 pt-1">
-                {selectedBusiness.placeTypes.map(type => (
+                {displayBusiness.placeTypes.map(type => (
                   <span
                     key={type}
                     className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
@@ -59,7 +66,7 @@ export function BusinessDetailPanel() {
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
               Tipping Policy
             </h3>
-            <TippingPolicyDisplay businessId={selectedBusiness.id} />
+            <TippingPolicyDisplay businessId={displayBusiness.id} />
           </div>
 
           <hr className="border-gray-200" />
@@ -69,7 +76,7 @@ export function BusinessDetailPanel() {
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
               Cast Your Vote
             </h3>
-            <TippingPolicySelector business={selectedBusiness} />
+            <TippingPolicySelector business={displayBusiness} />
           </div>
         </div>
       )}
