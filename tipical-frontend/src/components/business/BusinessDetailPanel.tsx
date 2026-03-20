@@ -1,12 +1,17 @@
+import { useShallow } from 'zustand/react/shallow';
 import { Sidebar } from '../common/Sidebar';
 import { TippingPolicyDisplay } from '../tipping/TippingPolicyDisplay';
 import { TippingPolicySelector } from '../tipping/TippingPolicySelector';
 import { useUIStore } from '../../stores/uiStore';
 
 export function BusinessDetailPanel() {
-  const selectedBusiness = useUIStore(s => s.selectedBusiness);
-  const showBusinessPanel = useUIStore(s => s.showBusinessPanel);
-  const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
+  const { selectedBusiness, showBusinessPanel, closeBusinessPanel } = useUIStore(
+    useShallow(s => ({
+      selectedBusiness: s.selectedBusiness,
+      showBusinessPanel: s.showBusinessPanel,
+      closeBusinessPanel: s.closeBusinessPanel,
+    }))
+  );
 
   return (
     <Sidebar
