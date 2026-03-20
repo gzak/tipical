@@ -4,8 +4,8 @@ import type { Business } from '../types';
 
 interface UseBusinessSearchOptions {
   query?: string;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude: number;
+  longitude: number;
   radius?: number;
 }
 
@@ -14,23 +14,14 @@ export function useBusinessSearch({
   latitude,
   longitude,
   radius = 5000,
-}: UseBusinessSearchOptions = {}) {
-  const hasQuery = Boolean(query && query.trim().length > 0);
-  const hasLocation = latitude != null && longitude != null;
-
-  const roundedLat = latitude != null ? Math.round(latitude * 1e4) / 1e4 : null;
-  const roundedLng = longitude != null ? Math.round(longitude * 1e4) / 1e4 : null;
+}: UseBusinessSearchOptions) {
+  const roundedLat = Math.round(latitude * 1e4) / 1e4;
+  const roundedLng = Math.round(longitude * 1e4) / 1e4;
 
   return useQuery<Business[]>({
     queryKey: ['businesses', 'search', { query, latitude: roundedLat, longitude: roundedLng, radius }],
-    queryFn: () =>
-      businessService.search(
-        hasQuery ? query : undefined,
-        hasLocation ? latitude! : undefined,
-        hasLocation ? longitude! : undefined,
-        radius
-      ),
-    enabled: hasQuery || hasLocation,
+    queryFn: () => businessService.search(query?.trim() || undefined, latitude, longitude, radius),
+    enabled: true,
   });
 }
 
