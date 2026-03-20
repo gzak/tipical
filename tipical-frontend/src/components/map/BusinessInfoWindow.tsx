@@ -24,7 +24,7 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
 
   const handleViewDetails = () => {
     onClose();
-    openBusinessPanel(business.id);
+    openBusinessPanel(business);
   };
 
   return (

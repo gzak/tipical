@@ -1,23 +1,22 @@
 import { create } from 'zustand';
+import type { Business } from '../types';
 
 interface UIState {
   showAuthModal: boolean;
-  selectedBusinessId: string | null;
+  selectedBusiness: Business | null;
   showBusinessPanel: boolean;
   setShowAuthModal: (show: boolean) => void;
-  setSelectedBusiness: (id: string | null) => void;
   setShowBusinessPanel: (show: boolean) => void;
-  openBusinessPanel: (id: string) => void;
+  openBusinessPanel: (business: Business) => void;
   closeBusinessPanel: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
   showAuthModal: false,
-  selectedBusinessId: null,
+  selectedBusiness: null,
   showBusinessPanel: false,
   setShowAuthModal: (show) => set({ showAuthModal: show }),
-  setSelectedBusiness: (id) => set({ selectedBusinessId: id }),
   setShowBusinessPanel: (show) => set({ showBusinessPanel: show }),
-  openBusinessPanel: (id) => set({ selectedBusinessId: id, showBusinessPanel: true }),
-  closeBusinessPanel: () => set({ selectedBusinessId: null, showBusinessPanel: false }),
+  openBusinessPanel: (business) => set({ selectedBusiness: business, showBusinessPanel: true }),
+  closeBusinessPanel: () => set({ selectedBusiness: null, showBusinessPanel: false }),
 }));
