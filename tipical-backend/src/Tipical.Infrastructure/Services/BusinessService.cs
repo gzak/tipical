@@ -13,22 +13,35 @@ public class BusinessService(
 {
     public async Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request)
     {
-        // Search Google Places API
-        var googleResults = await googlePlacesService.SearchAsync(
-            request.Query,
-            request.Latitude,
-            request.Longitude,
-            request.Radius);
+        // Search Google Places API — text search when query is provided, nearby search otherwise
+        IEnumerable<Place> places;
+        if (string.IsNullOrWhiteSpace(request.Query))
+        {
+            var nearbyResults = await googlePlacesService.SearchNearbyAsync(
+                request.Latitude,
+                request.Longitude,
+                request.Radius);
+            places = nearbyResults.Places;
+        }
+        else
+        {
+            var textResults = await googlePlacesService.SearchAsync(
+                request.Query,
+                request.Latitude,
+                request.Longitude,
+                request.Radius);
+            places = textResults.Places;
+        }
 
         // Extract all Google Place IDs
-        var googlePlaceIds = googleResults.Places.Select(p => p.Id).ToList();
+        var googlePlaceIds = places.Select(p => p.Id).ToList();
 
         // Single bulk lookup for all businesses
         var existingBusinesses = await businessRepository.GetByGooglePlaceIdsAsync(googlePlaceIds);
 
         var businessResponses = new List<BusinessResponse>();
 
-        foreach (var place in googleResults.Places)
+        foreach (var place in places)
         {
             // Check if business exists in database (has votes)
             if (existingBusinesses.TryGetValue(place.Id, out var business))
