@@ -23,6 +23,7 @@ public class GooglePlacesService : IGooglePlacesService
         {
             TextQuery = query,
             MaxResultCount = 20,
+            IncludedType = "establishment",
             LocationBias = new SearchTextRequest.Types.LocationBias
             {
                 Circle = new Circle
@@ -43,6 +44,7 @@ public class GooglePlacesService : IGooglePlacesService
         return await _client.SearchNearbyAsync(new SearchNearbyRequest
         {
             MaxResultCount = 20,
+            IncludedPrimaryTypes = { "establishment" },
             LocationRestriction = new SearchNearbyRequest.Types.LocationRestriction
             {
                 Circle = new Circle
