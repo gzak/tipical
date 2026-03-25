@@ -155,9 +155,7 @@ Frontend will be available at `http://localhost:5173`
 - `GET /api/v1/auth/me` - Get current user info (authenticated)
 
 ### Businesses
-- `GET /api/v1/businesses/search` - Search businesses
-- `GET /api/v1/businesses/{id}` - Get business by ID
-- `GET /api/v1/businesses/nearby` - Get nearby businesses
+- `GET /api/v1/businesses/search` - Search businesses (query is optional; omit for proximity-only results)
 
 ### Tipping
 - `GET /api/v1/tipping/votes/{businessId}` - Get vote aggregates
