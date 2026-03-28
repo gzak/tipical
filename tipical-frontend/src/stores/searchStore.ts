@@ -19,6 +19,6 @@ export const useSearchStore = create<SearchState>((set) => ({
   location: null,
   showResults: false,
   setQuery: (query) => set({ query, showResults: Boolean(query.trim()) }),
-  setLocation: (location) => set({ location, showResults: true }),
+  setLocation: (location) => set({ location }),
   setShowResults: (show) => set({ showResults: show }),
 }));
