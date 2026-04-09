@@ -42,50 +42,12 @@ tipical/
     └── package.json
 ```
 
-## Current Implementation Status
-
-### ✅ Completed - Backend
-1. ✅ Solution structure with 3 projects (Api, Core, Infrastructure)
-2. ✅ PostgreSQL with PostGIS via docker-compose
-3. ✅ Core models (Business, TippingVote, TippingPolicy enum)
-4. ✅ Entity Framework Core with PostGIS migrations
-5. ✅ JWT authentication configuration
-6. ✅ Google OAuth service implementation
-7. ✅ Auth Controller (/google, /me endpoints)
-8. ✅ Google Places Service integration
-9. ✅ Business repository with geospatial queries
-10. ✅ Businesses Controller (search, nearby endpoints)
-11. ✅ Tipping Vote repository with upsert logic
-12. ✅ Tipping Controller (vote endpoints)
-13. ✅ Middleware (CORS, exception handling)
-14. ✅ Swagger configuration
-15. ✅ Backend Dockerfile & docker-compose
-
-### ✅ Completed - Frontend Foundation
-1. ✅ Vite + React + TypeScript project
-2. ✅ Tailwind CSS configuration
-3. ✅ TypeScript types & interfaces
-4. ✅ Zustand stores (auth, UI, map)
-5. ✅ API service layer (auth, business, tipping)
-6. ✅ Axios with auth interceptors
-
-### 🚧 Remaining - Frontend Components
-1. ⏳ React Query setup & providers
-2. ⏳ Google OAuth components
-3. ⏳ Google Maps integration
-4. ⏳ Search bar & results
-5. ⏳ Business detail panel
-6. ⏳ Tipping policy display & selector
-7. ⏳ Main App layout
-8. ⏳ Responsive design
-9. ⏳ Error handling & loading states
-
 ## Quick Start
 
 ### Prerequisites
 - .NET 10.0 SDK
 - Node.js 18+
-- Docker & Docker Compose
+- Docker & Docker Compose (with Rosetta enabled on Apple Silicon)
 - Google Cloud Platform account (for API keys)
 
 ### Backend Setup
@@ -100,27 +62,22 @@ cd tipical-backend
 cp .env.example .env
 ```
 
-3. Update `.env` with your Google API keys
+3. Update `.env` with your Google API keys and JWT secret
 
-4. Start PostgreSQL:
+4. Start the API and PostgreSQL:
 ```bash
-docker-compose up postgres -d
+docker compose up --build -d
 ```
 
-5. Run migrations:
+5. Run migrations (from repo root):
 ```bash
-cd src/Tipical.Infrastructure
-dotnet ef database update --startup-project ../Tipical.Api/Tipical.Api.csproj
+dotnet ef database update \
+  --project tipical-backend/src/Tipical.Infrastructure \
+  --startup-project tipical-backend/src/Tipical.Api
 ```
 
-6. Run the API:
-```bash
-cd ../Tipical.Api
-dotnet run
-```
-
-API will be available at `http://localhost:5000`
-Swagger UI at `http://localhost:5000/swagger`
+API will be available at `http://localhost:5050`
+Swagger UI at `http://localhost:5050/swagger`
 
 ### Frontend Setup
 
@@ -212,17 +169,16 @@ Frontend will be available at `http://localhost:5173`
 - timestamps
 - UNIQUE(business_id, user_id)
 
-## Docker Deployment
+## Docker Deployment (local)
 
-Build and run everything with Docker Compose:
 ```bash
 cd tipical-backend
-docker-compose up --build
+docker compose up --build
 ```
 
 Services:
-- postgres: `localhost:5432`
-- api: `localhost:5000`
+- postgres: `localhost:6543`
+- api: `localhost:5050`
 
 ## Development Notes
 
@@ -235,19 +191,6 @@ Services:
 - Vite dev server with HMR
 - Tailwind JIT compilation
 - TypeScript strict mode
-
-## Next Steps
-
-1. Complete React components implementation
-2. Integrate Google Maps API
-3. Add Google OAuth flow
-4. Build business search UI
-5. Create tipping vote interface
-6. Add responsive mobile design
-7. Implement error boundaries
-8. Add loading states
-9. Performance optimization
-10. E2E testing
 
 ## License
 
