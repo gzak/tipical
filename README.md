@@ -173,7 +173,7 @@ Frontend will be available at `http://localhost:5173`
 
 ```bash
 cd tipical-backend
-docker compose up --build
+docker compose up --build -d
 ```
 
 Services:
