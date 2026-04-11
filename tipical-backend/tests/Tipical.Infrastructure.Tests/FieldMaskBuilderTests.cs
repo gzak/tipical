@@ -33,19 +33,19 @@ public class FieldMaskBuilderTests
         public string Value { get; set; } = "";
     }
 
-    [Fact]
-    public void FlatLeafSelection()
+    [Test]
+    public async Task FlatLeafSelection()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
             .ThenInclude(i => new { i.Id, i.Name })
             .Build();
 
-        Assert.Equal("items.id,items.name", mask);
+        await Assert.That(mask).IsEqualTo("items.id,items.name");
     }
 
-    [Fact]
-    public void SingleMemberNavigation_ThenFlatSelection()
+    [Test]
+    public async Task SingleMemberNavigation_ThenFlatSelection()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
@@ -53,66 +53,66 @@ public class FieldMaskBuilderTests
             .ThenInclude(s => new { s.Text, s.LanguageCode })
             .Build();
 
-        Assert.Equal("items.sub.text,items.sub.languageCode", mask);
+        await Assert.That(mask).IsEqualTo("items.sub.text,items.sub.languageCode");
     }
 
-    [Fact]
-    public void MultiLevel_SingleMember_ThenInclude()
+    [Test]
+    public async Task MultiLevel_SingleMember_ThenInclude()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
             .ThenInclude(i => i.Sub.Text)
             .Build();
 
-        Assert.Equal("items.sub.text", mask);
+        await Assert.That(mask).IsEqualTo("items.sub.text");
     }
 
-    [Fact]
-    public void MultiLevel_SingleMember_ThenInclude_ArbitraryDepth()
+    [Test]
+    public async Task MultiLevel_SingleMember_ThenInclude_ArbitraryDepth()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
             .ThenInclude(i => i.Sub.Deep.Value)
             .Build();
 
-        Assert.Equal("items.sub.deep.value", mask);
+        await Assert.That(mask).IsEqualTo("items.sub.deep.value");
     }
 
-    [Fact]
-    public void MultiLevel_AnonymousObject_SameParent()
+    [Test]
+    public async Task MultiLevel_AnonymousObject_SameParent()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
             .ThenInclude(i => new { i.Sub.Text, i.Sub.LanguageCode })
             .Build();
 
-        Assert.Equal("items.sub.text,items.sub.languageCode", mask);
+        await Assert.That(mask).IsEqualTo("items.sub.text,items.sub.languageCode");
     }
 
-    [Fact]
-    public void MultiLevel_AnonymousObject_DifferentParents()
+    [Test]
+    public async Task MultiLevel_AnonymousObject_DifferentParents()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
             .ThenInclude(i => new { i.Sub.Text, i.Name })
             .Build();
 
-        Assert.Equal("items.sub.text,items.name", mask);
+        await Assert.That(mask).IsEqualTo("items.sub.text,items.name");
     }
 
-    [Fact]
-    public void MultiLevel_Include()
+    [Test]
+    public async Task MultiLevel_Include()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Parent.Items)
             .ThenInclude(i => new { i.Id, i.Name })
             .Build();
 
-        Assert.Equal("parent.items.id,parent.items.name", mask);
+        await Assert.That(mask).IsEqualTo("parent.items.id,parent.items.name");
     }
 
-    [Fact]
-    public void ReInclude_Branching()
+    [Test]
+    public async Task ReInclude_Branching()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
@@ -121,11 +121,11 @@ public class FieldMaskBuilderTests
             .ThenInclude(i => new { i.Sub.Text, i.Sub.LanguageCode })
             .Build();
 
-        Assert.Equal("items.id,items.sub.text,items.sub.languageCode", mask);
+        await Assert.That(mask).IsEqualTo("items.id,items.sub.text,items.sub.languageCode");
     }
 
-    [Fact]
-    public void Deduplication()
+    [Test]
+    public async Task Deduplication()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
@@ -134,28 +134,28 @@ public class FieldMaskBuilderTests
             .ThenInclude(i => new { i.Name, i.Id })  // both already added
             .Build();
 
-        Assert.Equal("items.id,items.name", mask);
+        await Assert.That(mask).IsEqualTo("items.id,items.name");
     }
 
-    [Fact]
-    public void ProtoName_TrailingUnderscore_Stripped()
+    [Test]
+    public async Task ProtoName_TrailingUnderscore_Stripped()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
             .ThenInclude(i => new { i.Types_ })
             .Build();
 
-        Assert.Equal("items.types", mask);
+        await Assert.That(mask).IsEqualTo("items.types");
     }
 
-    [Fact]
-    public void ProtoName_PascalCase_ToCamelCase()
+    [Test]
+    public async Task ProtoName_PascalCase_ToCamelCase()
     {
         var mask = FieldMask.For<TestResponse>()
             .Include(r => r.Items)
             .ThenInclude(i => new { i.Sub.LanguageCode })
             .Build();
 
-        Assert.Equal("items.sub.languageCode", mask);
+        await Assert.That(mask).IsEqualTo("items.sub.languageCode");
     }
 }
