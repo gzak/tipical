@@ -33,20 +33,16 @@ public sealed class FieldMaskRoot<TRoot>
 
     internal static string GetMemberName(Expression expr)
     {
-        if (expr is UnaryExpression { NodeType: ExpressionType.Convert } unary)
-            expr = unary.Operand;
-
-        var parts = new List<string>();
+        var parts = new Stack<string>();
         while (expr is MemberExpression member)
         {
-            parts.Add(ToProtoName(member.Member.Name));
+            parts.Push(ToProtoName(member.Member.Name));
             expr = member.Expression!;
         }
 
         if (parts.Count == 0)
             throw new ArgumentException($"Expected a member access expression, got {expr.NodeType}");
 
-        parts.Reverse();
         return string.Join('.', parts);
     }
 
@@ -71,8 +67,6 @@ public sealed class FieldMaskNode<TRoot, TCurrent>
 
     public FieldMaskNode<TRoot, TNext> ThenInclude<TNext>(Expression<Func<TCurrent, TNext>> selector)
     {
-        // Do NOT commit _currentPath — further ThenInclude means we're still navigating,
-        // not selecting this node as a leaf.
         if (selector.Body is NewExpression newExpr)
         {
             foreach (var arg in newExpr.Arguments)

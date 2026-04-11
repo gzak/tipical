@@ -2,8 +2,6 @@ namespace Tipical.Infrastructure.Tests;
 
 public class FieldMaskBuilderTests
 {
-    #region Stub types
-
     private sealed class TestResponse
     {
         public List<TestItem> Items { get; set; } = [];
@@ -34,8 +32,6 @@ public class FieldMaskBuilderTests
     {
         public string Value { get; set; } = "";
     }
-
-    #endregion
 
     [Fact]
     public void FlatLeafSelection()
