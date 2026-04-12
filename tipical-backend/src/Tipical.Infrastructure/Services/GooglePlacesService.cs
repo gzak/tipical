@@ -53,7 +53,7 @@ public class GooglePlacesService : IGooglePlacesService
         return await _client.SearchNearbyAsync(new SearchNearbyRequest
         {
             MaxResultCount = 20,
-            IncludedPrimaryTypes = { "establishment" },
+            IncludedTypes = { "restaurant", "cafe", "coffee_shop", "bar" },
             LocationRestriction = new SearchNearbyRequest.Types.LocationRestriction
             {
                 Circle = new Circle
