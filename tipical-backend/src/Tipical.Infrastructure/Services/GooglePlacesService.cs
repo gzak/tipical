@@ -1,3 +1,4 @@
+using Google.Api.Gax.Grpc;
 using Google.Maps.Places.V1;
 using Google.Type;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +8,18 @@ namespace Tipical.Infrastructure.Services;
 
 public class GooglePlacesService : IGooglePlacesService
 {
+    private static readonly CallSettings NearbySearchSettings =
+        FieldMask.For<SearchNearbyResponse>()
+            .Include(r => r.Places)
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri })
+            .ToCallSettings();
+
+    private static readonly CallSettings TextSearchSettings =
+        FieldMask.For<SearchTextResponse>()
+            .Include(r => r.Places)
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri })
+            .ToCallSettings();
+
     private readonly PlacesClient _client;
 
     public GooglePlacesService(IConfiguration configuration)
@@ -28,15 +41,11 @@ public class GooglePlacesService : IGooglePlacesService
             {
                 Circle = new Circle
                 {
-                    Center = new LatLng
-                    {
-                        Latitude = latitude,
-                        Longitude = longitude
-                    },
+                    Center = new LatLng { Latitude = latitude, Longitude = longitude },
                     Radius = radius
                 }
             }
-        });
+        }, TextSearchSettings);
     }
 
     public async Task<SearchNearbyResponse> SearchNearbyAsync(double latitude, double longitude, int radius)
@@ -44,20 +53,16 @@ public class GooglePlacesService : IGooglePlacesService
         return await _client.SearchNearbyAsync(new SearchNearbyRequest
         {
             MaxResultCount = 20,
-            IncludedPrimaryTypes = { "establishment" },
+            IncludedTypes = { "restaurant", "cafe", "coffee_shop", "bar" },
             LocationRestriction = new SearchNearbyRequest.Types.LocationRestriction
             {
                 Circle = new Circle
                 {
-                    Center = new LatLng
-                    {
-                        Latitude = latitude,
-                        Longitude = longitude
-                    },
+                    Center = new LatLng { Latitude = latitude, Longitude = longitude },
                     Radius = radius
                 }
             }
-        });
+        }, NearbySearchSettings);
     }
 
     public async Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double latitude, double longitude, int radius)
@@ -69,11 +74,7 @@ public class GooglePlacesService : IGooglePlacesService
             {
                 Circle = new Circle
                 {
-                    Center = new LatLng
-                    {
-                        Latitude = latitude,
-                        Longitude = longitude
-                    },
+                    Center = new LatLng { Latitude = latitude, Longitude = longitude },
                     Radius = radius
                 }
             }

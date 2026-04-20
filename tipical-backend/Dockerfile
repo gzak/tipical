@@ -2,14 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy solution and project files
-COPY Tipical.sln ./
+# Copy project files
 COPY src/Tipical.Api/Tipical.Api.csproj src/Tipical.Api/
 COPY src/Tipical.Core/Tipical.Core.csproj src/Tipical.Core/
 COPY src/Tipical.Infrastructure/Tipical.Infrastructure.csproj src/Tipical.Infrastructure/
 
 # Restore dependencies
-RUN dotnet restore Tipical.sln
+RUN dotnet restore src/Tipical.Api/Tipical.Api.csproj
 
 # Copy everything else and build
 COPY . .
