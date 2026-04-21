@@ -11,13 +11,13 @@ public class GooglePlacesService : IGooglePlacesService
     private static readonly CallSettings NearbySearchSettings =
         FieldMask.For<SearchNearbyResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri })
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location })
             .ToCallSettings();
 
     private static readonly CallSettings TextSearchSettings =
         FieldMask.For<SearchTextResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri })
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location })
             .ToCallSettings();
 
     private readonly PlacesClient _client;

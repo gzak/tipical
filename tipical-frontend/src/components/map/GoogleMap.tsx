@@ -84,6 +84,7 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
       mapTypeControl: false,
       fullscreenControl: false,
       clickableIcons: false,
+      styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }],
     }),
     []
   );
