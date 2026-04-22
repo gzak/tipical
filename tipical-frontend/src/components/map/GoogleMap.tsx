@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GoogleMap as GoogleMapBase, Marker, useLoadScript } from '@react-google-maps/api';
 import { useMapStore } from '../../stores/mapStore';
 import { useUIStore } from '../../stores/uiStore';
-import { useGeolocation, useIpGeolocation } from '../../hooks';
+import { useGeolocation } from '../../hooks';
 import type { Business } from '../../types';
 import { BusinessMarker } from './BusinessMarker';
 
@@ -44,18 +44,8 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     [isLoaded] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  // Approximate location from the user's IP — no permission required.
-  // Populates the store center on first resolve; map render is gated on center being set.
-  const { data: ipLocation } = useIpGeolocation();
-
   // Precise GPS location — only requested when the user clicks "My Location".
   const { isSupported, latitude, longitude, isLoading: gpsLoading, requestLocation } = useGeolocation();
-
-  useEffect(() => {
-    if (ipLocation && !center) {
-      setCenter(ipLocation);
-    }
-  }, [ipLocation, center, setCenter]);
 
   // Center the map on GPS coordinates once when they first become available.
   // Reset by handleMyLocation so repeated button presses re-center.
