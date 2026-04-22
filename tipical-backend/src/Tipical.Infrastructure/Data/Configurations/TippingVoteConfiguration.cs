@@ -14,7 +14,7 @@ public class TippingVoteConfiguration : IEntityTypeConfiguration<TippingVote>
 
         builder.Property(tv => tv.Id)
             .HasColumnName("id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(tv => tv.BusinessId)
             .HasColumnName("business_id")
