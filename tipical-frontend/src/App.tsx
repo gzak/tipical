@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useIpGeolocation } from './hooks/useIpGeolocation';
+import { useInitialLocation } from './hooks/useInitialLocation';
 import { useBusinessSearch } from './hooks/useBusinessSearch';
 import { useSearchStore } from './stores/searchStore';
 import { useMapStore } from './stores/mapStore';
@@ -44,20 +44,14 @@ function AppLayout() {
   );
 }
 
-const FALLBACK_LOCATION = { latitude: 47.6062, longitude: -122.3321 }; // Seattle
-
 function App() {
-  const { data: ipLocation, isError: ipError } = useIpGeolocation();
+  const initialLocation = useInitialLocation();
   const setLocation = useSearchStore(s => s.setLocation);
   const location = useSearchStore(s => s.location);
 
   useEffect(() => {
-    if (ipLocation) {
-      setLocation({ latitude: ipLocation.lat, longitude: ipLocation.lng });
-    } else if (ipError) {
-      setLocation(FALLBACK_LOCATION);
-    }
-  }, [ipLocation, ipError, setLocation]);
+    if (initialLocation) setLocation(initialLocation);
+  }, [initialLocation, setLocation]);
 
   if (!location) return <Loading fullScreen />;
 
