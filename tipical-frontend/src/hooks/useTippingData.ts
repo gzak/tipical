@@ -3,37 +3,28 @@ import { tippingService } from '../services/tippingService';
 import { useAuthStore } from '../stores/authStore';
 import type { TippingVote, TippingVotesAggregate, TippingPolicy } from '../types';
 
-export function useTippingData(businessId: string | null, googlePlaceId?: string) {
+export function useTippingData(googlePlaceId: string | null) {
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore(s => s.isAuthenticated());
 
   const votesQuery = useQuery<TippingVotesAggregate>({
-    queryKey: ['tipping', 'votes', businessId],
-    queryFn: () => tippingService.getVotes(businessId!),
-    enabled: Boolean(businessId),
+    queryKey: ['tipping', 'votes', googlePlaceId],
+    queryFn: () => tippingService.getVotes(googlePlaceId!),
+    enabled: Boolean(googlePlaceId),
   });
 
   const userVoteQuery = useQuery<TippingVote | null>({
-    queryKey: ['tipping', 'userVote', businessId],
-    queryFn: () => tippingService.getUserVote(businessId!),
-    enabled: Boolean(businessId) && isAuthenticated,
+    queryKey: ['tipping', 'userVote', googlePlaceId],
+    queryFn: () => tippingService.getUserVote(googlePlaceId!),
+    enabled: Boolean(googlePlaceId) && isAuthenticated,
   });
 
-  const submitVoteMutation = useMutation<
-    TippingVote,
-    Error,
-    { policy: TippingPolicy; businessId: string; googlePlaceId: string }
-  >({
-    mutationFn: ({ policy, businessId: id, googlePlaceId: placeId }) =>
-      tippingService.submitVote(id, { tippingPolicy: policy, googlePlaceId: placeId }),
-    onSuccess: (data, { businessId: id }) => {
-      const resolvedId = data.businessId;
-      queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', resolvedId] });
-      queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', resolvedId] });
-      if (resolvedId !== id) {
-        queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', id] });
-        queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', id] });
-      }
+  const submitVoteMutation = useMutation<TippingVote, Error, TippingPolicy>({
+    mutationFn: (policy) =>
+      tippingService.submitVote(googlePlaceId!, { tippingPolicy: policy }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['tipping', 'userVote', googlePlaceId], data);
+      queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', googlePlaceId] });
     },
   });
 
@@ -43,8 +34,8 @@ export function useTippingData(businessId: string | null, googlePlaceId?: string
     isLoading: votesQuery.isLoading || userVoteQuery.isLoading,
     error: votesQuery.error ?? userVoteQuery.error,
     submitVote: (policy: TippingPolicy) => {
-      if (!businessId || !googlePlaceId) return;
-      submitVoteMutation.mutate({ policy, businessId, googlePlaceId });
+      if (!googlePlaceId) return;
+      submitVoteMutation.mutate(policy);
     },
     isSubmitting: submitVoteMutation.isPending,
     submitError: submitVoteMutation.error,

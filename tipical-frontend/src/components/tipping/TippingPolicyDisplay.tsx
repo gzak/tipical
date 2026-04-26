@@ -15,11 +15,11 @@ const POLICY_BADGE_STYLES: Record<TippingPolicyType, string> = {
 };
 
 interface TippingPolicyDisplayProps {
-  businessId: string;
+  googlePlaceId: string;
 }
 
-export function TippingPolicyDisplay({ businessId }: TippingPolicyDisplayProps) {
-  const { votes, isLoading, error } = useTippingData(businessId);
+export function TippingPolicyDisplay({ googlePlaceId }: TippingPolicyDisplayProps) {
+  const { votes, isLoading, error } = useTippingData(googlePlaceId);
 
   if (isLoading) {
     return <div className="animate-pulse h-12 bg-gray-100 rounded-lg" />;

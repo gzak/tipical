@@ -5,7 +5,7 @@ namespace Tipical.Core.Services;
 
 public interface ITippingService
 {
-    Task<TippingVoteResponse> SubmitVoteAsync(Guid businessId, string userId, TippingPolicy policy, string googlePlaceId);
-    Task<TippingVotesAggregateResponse> GetVotesAggregateAsync(Guid businessId);
-    Task<TippingVoteResponse?> GetUserVoteAsync(Guid businessId, string userId);
+    Task<TippingVoteResponse> SubmitVoteAsync(string googlePlaceId, string userId, TippingPolicy policy);
+    Task<TippingVotesAggregateResponse> GetVotesAggregateAsync(string googlePlaceId);
+    Task<TippingVoteResponse?> GetUserVoteAsync(string googlePlaceId, string userId);
 }

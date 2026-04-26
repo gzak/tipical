@@ -1,3 +1,4 @@
+using FlexLabs.EntityFrameworkCore.Upsert;
 using Microsoft.EntityFrameworkCore;
 using Tipical.Core.Repositories;
 using Tipical.Core.Models;
@@ -29,11 +30,13 @@ public class BusinessRepository(ApplicationDbContext context) : IBusinessReposit
             .ToDictionaryAsync(b => b.GooglePlaceId, b => b);
     }
 
-    public async Task<Business> CreateAsync(Business business)
+    public async Task<Business> GetOrCreateAsync(string googlePlaceId)
     {
-        context.Businesses.Add(business);
-        await context.SaveChangesAsync();
+        await context.Upsert(new Business { Id = Guid.NewGuid(), GooglePlaceId = googlePlaceId })
+            .On(b => b.GooglePlaceId)
+            .WhenMatched(b => new Business { GooglePlaceId = b.GooglePlaceId })
+            .RunAsync();
 
-        return business;
+        return await context.Businesses.FirstAsync(b => b.GooglePlaceId == googlePlaceId);
     }
 }

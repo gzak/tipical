@@ -14,7 +14,7 @@ public class BusinessConfiguration : IEntityTypeConfiguration<Business>
 
         builder.Property(b => b.Id)
             .HasColumnName("id")
-            .ValueGeneratedOnAdd();
+            .ValueGeneratedNever();
 
         builder.Property(b => b.GooglePlaceId)
             .HasColumnName("google_place_id")
