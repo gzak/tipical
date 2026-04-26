@@ -8,7 +8,7 @@ export type TippingPolicy = typeof TippingPolicy[keyof typeof TippingPolicy];
 
 export interface Business {
   id: string;
-  googlePlaceId?: string;
+  googlePlaceId: string;
   name: string;
   address: string;
   latitude: number;
@@ -22,14 +22,14 @@ export interface Business {
 
 export interface TippingVote {
   id: string;
-  businessId: string;
+  googlePlaceId: string;
   tippingPolicy: TippingPolicy;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface TippingVotesAggregate {
-  businessId: string;
+  googlePlaceId: string;
   winningPolicy?: TippingPolicy;
   winningPolicyVoteCount?: number;
   votesByPolicy: Record<TippingPolicy, number>;
@@ -57,5 +57,4 @@ export interface GoogleAuthRequest {
 
 export interface TippingVoteRequest {
   tippingPolicy: TippingPolicy;
-  googlePlaceId: string;
 }

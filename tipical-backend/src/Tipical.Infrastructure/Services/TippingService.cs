@@ -7,23 +7,10 @@ namespace Tipical.Infrastructure.Services;
 
 public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusinessRepository businessRepository) : ITippingService
 {
-    public async Task<TippingVoteResponse> SubmitVoteAsync(Guid businessId, string userId, TippingPolicy policy, string googlePlaceId)
+    public async Task<TippingVoteResponse> SubmitVoteAsync(string googlePlaceId, string userId, TippingPolicy policy)
     {
-        Business? business = null;
+        var business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
 
-        // If businessId is provided and not empty, try to get business by ID
-        if (businessId != Guid.Empty)
-        {
-            business = await businessRepository.GetByIdAsync(businessId);
-        }
-
-        // If not found by ID, check if business exists by googlePlaceId
-        if (business == null)
-        {
-            business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
-        }
-
-        // If still not found, create minimal business record
         if (business == null)
         {
             business = new Business
@@ -34,22 +21,25 @@ public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusin
             business = await businessRepository.CreateAsync(business);
         }
 
-        // Use resolved business ID for vote
         var vote = await tippingVoteRepository.UpsertAsync(business.Id, userId, policy);
 
         return new TippingVoteResponse
         {
             Id = vote.Id,
-            BusinessId = vote.BusinessId,
+            GooglePlaceId = googlePlaceId,
             TippingPolicy = vote.TippingPolicy,
             CreatedAt = vote.CreatedAt,
             UpdatedAt = vote.UpdatedAt
         };
     }
 
-    public async Task<TippingVotesAggregateResponse> GetVotesAggregateAsync(Guid businessId)
+    public async Task<TippingVotesAggregateResponse> GetVotesAggregateAsync(string googlePlaceId)
     {
-        var voteCounts = await tippingVoteRepository.GetVoteCountsByPolicyAsync(businessId);
+        var business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
+
+        var voteCounts = business != null
+            ? await tippingVoteRepository.GetVoteCountsByPolicyAsync(business.Id)
+            : new Dictionary<TippingPolicy, int>();
 
         TippingPolicy? winningPolicy = null;
         int? winningPolicyVoteCount = null;
@@ -64,7 +54,7 @@ public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusin
 
         return new TippingVotesAggregateResponse
         {
-            BusinessId = businessId,
+            GooglePlaceId = googlePlaceId,
             WinningPolicy = winningPolicy,
             WinningPolicyVoteCount = winningPolicyVoteCount,
             VotesByPolicy = voteCounts,
@@ -72,16 +62,18 @@ public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusin
         };
     }
 
-    public async Task<TippingVoteResponse?> GetUserVoteAsync(Guid businessId, string userId)
+    public async Task<TippingVoteResponse?> GetUserVoteAsync(string googlePlaceId, string userId)
     {
-        var vote = await tippingVoteRepository.GetByBusinessAndUserAsync(businessId, userId);
+        var business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
+        if (business == null) return null;
 
+        var vote = await tippingVoteRepository.GetByBusinessAndUserAsync(business.Id, userId);
         if (vote == null) return null;
 
         return new TippingVoteResponse
         {
             Id = vote.Id,
-            BusinessId = vote.BusinessId,
+            GooglePlaceId = googlePlaceId,
             TippingPolicy = vote.TippingPolicy,
             CreatedAt = vote.CreatedAt,
             UpdatedAt = vote.UpdatedAt
