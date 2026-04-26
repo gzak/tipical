@@ -1,3 +1,4 @@
+using FlexLabs.EntityFrameworkCore.Upsert;
 using Microsoft.EntityFrameworkCore;
 using Tipical.Core.Repositories;
 using Tipical.Core.Models;
@@ -35,5 +36,15 @@ public class BusinessRepository(ApplicationDbContext context) : IBusinessReposit
         await context.SaveChangesAsync();
 
         return business;
+    }
+
+    public async Task<Business> GetOrCreateAsync(string googlePlaceId)
+    {
+        await context.Upsert(new Business { Id = Guid.NewGuid(), GooglePlaceId = googlePlaceId })
+            .On(b => b.GooglePlaceId)
+            .WhenMatched(b => new Business { GooglePlaceId = b.GooglePlaceId })
+            .RunAsync();
+
+        return await context.Businesses.FirstAsync(b => b.GooglePlaceId == googlePlaceId);
     }
 }

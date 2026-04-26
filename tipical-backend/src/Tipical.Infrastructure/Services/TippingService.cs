@@ -9,18 +9,7 @@ public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusin
 {
     public async Task<TippingVoteResponse> SubmitVoteAsync(string googlePlaceId, string userId, TippingPolicy policy)
     {
-        var business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
-
-        if (business == null)
-        {
-            business = new Business
-            {
-                Id = Guid.NewGuid(),
-                GooglePlaceId = googlePlaceId
-            };
-            business = await businessRepository.CreateAsync(business);
-        }
-
+        var business = await businessRepository.GetOrCreateAsync(googlePlaceId);
         var vote = await tippingVoteRepository.UpsertAsync(business.Id, userId, policy);
 
         return new TippingVoteResponse
@@ -37,9 +26,10 @@ public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusin
     {
         var business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
 
-        var voteCounts = business != null
-            ? await tippingVoteRepository.GetVoteCountsByPolicyAsync(business.Id)
-            : new Dictionary<TippingPolicy, int>();
+        var voteCounts = business?.TippingVotes
+            .GroupBy(v => v.TippingPolicy)
+            .ToDictionary(g => g.Key, g => g.Count())
+            ?? new Dictionary<TippingPolicy, int>();
 
         TippingPolicy? winningPolicy = null;
         int? winningPolicyVoteCount = null;
@@ -67,7 +57,7 @@ public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusin
         var business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
         if (business == null) return null;
 
-        var vote = await tippingVoteRepository.GetByBusinessAndUserAsync(business.Id, userId);
+        var vote = business.TippingVotes.FirstOrDefault(v => v.UserId == userId);
         if (vote == null) return null;
 
         return new TippingVoteResponse
