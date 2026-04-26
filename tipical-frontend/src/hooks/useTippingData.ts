@@ -22,9 +22,9 @@ export function useTippingData(googlePlaceId: string | null) {
   const submitVoteMutation = useMutation<TippingVote, Error, TippingPolicy>({
     mutationFn: (policy) =>
       tippingService.submitVote(googlePlaceId!, { tippingPolicy: policy }),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(['tipping', 'userVote', googlePlaceId], data);
       queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', googlePlaceId] });
-      queryClient.invalidateQueries({ queryKey: ['tipping', 'userVote', googlePlaceId] });
     },
   });
 
