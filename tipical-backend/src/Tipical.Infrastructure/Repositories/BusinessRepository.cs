@@ -30,14 +30,6 @@ public class BusinessRepository(ApplicationDbContext context) : IBusinessReposit
             .ToDictionaryAsync(b => b.GooglePlaceId, b => b);
     }
 
-    public async Task<Business> CreateAsync(Business business)
-    {
-        context.Businesses.Add(business);
-        await context.SaveChangesAsync();
-
-        return business;
-    }
-
     public async Task<Business> GetOrCreateAsync(string googlePlaceId)
     {
         await context.Upsert(new Business { Id = Guid.NewGuid(), GooglePlaceId = googlePlaceId })
