@@ -5,6 +5,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { useGeolocation } from '../../hooks';
 import type { Business } from '../../types';
 import { BusinessMarker } from './BusinessMarker';
+import { SearchThisAreaButton } from './SearchThisAreaButton';
 
 // Stable reference — must not be recreated on each render
 const LIBRARIES: ['places'] = ['places'];
@@ -122,6 +123,7 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
 
   return (
     <div className="relative w-full h-full">
+      <SearchThisAreaButton />
       <GoogleMapBase
         mapContainerStyle={MAP_CONTAINER_STYLE}
         center={center}

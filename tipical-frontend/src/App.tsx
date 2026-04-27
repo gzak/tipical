@@ -11,19 +11,13 @@ import { UserProfile, GoogleAuthModal } from './components/auth';
 import { Loading } from './components/common';
 
 function AppLayout() {
-  const { location, query } = useSearchStore(
-    useShallow(s => ({ location: s.location, query: s.query }))
+  const { searchCenter, query } = useSearchStore(
+    useShallow(s => ({ searchCenter: s.searchCenter, query: s.query }))
   );
-  const setCenter = useMapStore(s => s.setCenter);
-
-  useEffect(() => {
-    setCenter({ lat: location!.latitude, lng: location!.longitude });
-  }, [location, setCenter]);
 
   const { data: businesses = [] } = useBusinessSearch({
     query: query.trim() || undefined,
-    latitude: location!.latitude,
-    longitude: location!.longitude,
+    searchCenter: searchCenter!,
   });
 
   return (
@@ -46,14 +40,19 @@ function AppLayout() {
 
 function App() {
   const initialLocation = useInitialLocation();
-  const setLocation = useSearchStore(s => s.setLocation);
-  const location = useSearchStore(s => s.location);
+  const setSearchCenter = useSearchStore(s => s.setSearchCenter);
+  const searchCenter = useSearchStore(s => s.searchCenter);
+  const setCenter = useMapStore(s => s.setCenter);
 
   useEffect(() => {
-    if (initialLocation) setLocation(initialLocation);
-  }, [initialLocation, setLocation]);
+    if (initialLocation) {
+      const zoom = useMapStore.getState().zoom;
+      setSearchCenter({ ...initialLocation, zoom });
+      setCenter({ lat: initialLocation.latitude, lng: initialLocation.longitude });
+    }
+  }, [initialLocation, setSearchCenter, setCenter]);
 
-  if (!location) return <Loading fullScreen />;
+  if (!searchCenter) return <Loading fullScreen />;
 
   return <AppLayout />;
 }

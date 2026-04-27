@@ -31,15 +31,14 @@ function sortByPolicy(a: Business, b: Business): number {
 }
 
 export function SearchResults() {
-  const { query, location, showResults, setShowResults } = useSearchStore(
-    useShallow(s => ({ query: s.query, location: s.location, showResults: s.showResults, setShowResults: s.setShowResults }))
+  const { query, searchCenter, showResults, setShowResults } = useSearchStore(
+    useShallow(s => ({ query: s.query, searchCenter: s.searchCenter, showResults: s.showResults, setShowResults: s.setShowResults }))
   );
   const openBusinessPanel = useUIStore(s => s.openBusinessPanel);
 
   const { data: businesses = [], isLoading, error } = useBusinessSearch({
     query: query.trim() || undefined,
-    latitude: location!.latitude,
-    longitude: location!.longitude,
+    searchCenter: searchCenter!,
   });
 
   const sorted = [...businesses].sort(sortByPolicy);
