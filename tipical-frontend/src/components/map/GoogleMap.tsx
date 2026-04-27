@@ -32,11 +32,9 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
   const center = useMapStore(s => s.center);
   const zoom = useMapStore(s => s.zoom);
   const setCenter = useMapStore(s => s.setCenter);
-  const setZoom = useMapStore(s => s.setZoom);
   const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
 
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
 
   // Memoized after isLoaded so google.maps.Size is available; deps array is intentionally [isLoaded].
   const userLocationIcon = useMemo(
@@ -79,18 +77,6 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     []
   );
 
-  const handleLoad = useCallback((m: google.maps.Map) => setMap(m), []);
-
-  const handleCenterChanged = useCallback(() => {
-    const c = map?.getCenter();
-    if (c) setCenter({ lat: c.lat(), lng: c.lng() });
-  }, [map, setCenter]);
-
-  const handleZoomChanged = useCallback(() => {
-    const z = map?.getZoom();
-    if (z !== undefined) setZoom(z);
-  }, [map, setZoom]);
-
   const handleMapClick = useCallback(() => {
     setActiveMarkerId(null);
     closeBusinessPanel();
@@ -127,9 +113,6 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
         center={center}
         zoom={zoom}
         options={mapOptions}
-        onLoad={handleLoad}
-        onCenterChanged={handleCenterChanged}
-        onZoomChanged={handleZoomChanged}
         onClick={handleMapClick}
       >
         {/* GPS user location blue dot — only shown after permission is granted */}
