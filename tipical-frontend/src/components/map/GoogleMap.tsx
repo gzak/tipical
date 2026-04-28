@@ -53,23 +53,29 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
   // Center the map on GPS coordinates once when they first become available.
   // Reset by handleMyLocation so repeated button presses re-center.
   const gpsCenteredRef = useRef(false);
+  // Stable initial center for the map prop — avoids a panTo→onCenterChanged→setCenter→panTo loop.
+  const mapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
     if (latitude !== null && longitude !== null && !gpsCenteredRef.current) {
       gpsCenteredRef.current = true;
-      setCenter({ lat: latitude, lng: longitude });
+      const pos = { lat: latitude, lng: longitude };
+      setCenter(pos);
+      map?.panTo(pos);
     }
-  }, [latitude, longitude, setCenter]);
+  }, [latitude, longitude, setCenter, map]);
 
   const handleMyLocation = useCallback(() => {
     if (latitude !== null && longitude !== null) {
       // GPS already acquired — just re-center without re-requesting.
-      setCenter({ lat: latitude, lng: longitude });
+      const pos = { lat: latitude, lng: longitude };
+      setCenter(pos);
+      map?.panTo(pos);
     } else {
       // First press — trigger the browser permission prompt and acquire GPS.
       gpsCenteredRef.current = false;
       requestLocation();
     }
-  }, [latitude, longitude, setCenter, requestLocation]);
+  }, [latitude, longitude, setCenter, map, requestLocation]);
 
   const mapOptions = useMemo(
     () => ({
@@ -136,12 +142,16 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     );
   }
 
+  // Capture the initial center once. Passing a reactive store value as the center prop
+  // would create a feedback loop: onCenterChanged → setCenter → new object ref → panTo → repeat.
+  if (!mapCenterRef.current) mapCenterRef.current = center;
+
   return (
     <div className="relative w-full h-full">
       <SearchThisAreaButton />
       <GoogleMapBase
         mapContainerStyle={MAP_CONTAINER_STYLE}
-        center={center}
+        center={mapCenterRef.current}
         zoom={zoom}
         options={mapOptions}
         onLoad={handleLoad}
