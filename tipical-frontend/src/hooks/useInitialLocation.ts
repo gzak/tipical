@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 interface Location {
   latitude: number;
   longitude: number;
+  accuracy: number;
 }
 
-const FALLBACK: Location = { latitude: 47.6062, longitude: -122.3321 }; // Seattle
+const FALLBACK: Location = { latitude: 47.6062, longitude: -122.3321, accuracy: 5000 }; // Seattle
 
 // Resolves an initial map center without triggering permission prompts.
 // Priority: silent browser geolocation (if already granted) → IP geolocation → hardcoded fallback
@@ -19,7 +20,7 @@ export function useInitialLocation(): Location | null {
           const { state } = await navigator.permissions.query({ name: 'geolocation' });
           if (state === 'granted') {
             const pos = await getBrowserPosition();
-            setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+            setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy });
             return;
           }
         } catch {
@@ -28,13 +29,16 @@ export function useInitialLocation(): Location | null {
       }
 
       try {
-        const res = await fetch('https://ipapi.co/json/');
+        const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        const res = await fetch(`https://www.googleapis.com/geolocation/v1/geolocate?key=${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
         if (!res.ok) throw new Error();
-        const data = await res.json();
-        if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
-          setLocation({ latitude: data.latitude as number, longitude: data.longitude as number });
-          return;
-        }
+        const { location: { lat: latitude, lng: longitude }, accuracy } = await res.json();
+        setLocation({ latitude, longitude, accuracy });
+        return;
       } catch {
         // IP geolocation failed — fall through to hardcoded fallback
       }
