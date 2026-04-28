@@ -1,24 +1,25 @@
 import { create } from 'zustand';
 
-interface Location {
+export interface SearchCenter {
   latitude: number;
   longitude: number;
+  zoom: number;
 }
 
 interface SearchState {
   query: string;
-  location: Location | null;
+  searchCenter: SearchCenter | null;
   showResults: boolean;
   setQuery: (query: string) => void;
-  setLocation: (location: Location) => void;
+  setSearchCenter: (center: SearchCenter) => void;
   setShowResults: (show: boolean) => void;
 }
 
 export const useSearchStore = create<SearchState>((set) => ({
   query: '',
-  location: null,
+  searchCenter: null,
   showResults: false,
   setQuery: (query) => set({ query, showResults: Boolean(query.trim()) }),
-  setLocation: (location) => set({ location }),
+  setSearchCenter: (searchCenter) => set({ searchCenter }),
   setShowResults: (show) => set({ showResults: show }),
 }));

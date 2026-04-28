@@ -5,18 +5,22 @@ interface UIState {
   showAuthModal: boolean;
   selectedBusiness: Business | null;
   showBusinessPanel: boolean;
+  showSearchThisArea: boolean;
   setShowAuthModal: (show: boolean) => void;
   setShowBusinessPanel: (show: boolean) => void;
   openBusinessPanel: (business: Business) => void;
   closeBusinessPanel: () => void;
+  setShowSearchThisArea: (show: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
   showAuthModal: false,
   selectedBusiness: null,
   showBusinessPanel: false,
+  showSearchThisArea: false,
   setShowAuthModal: (show) => set({ showAuthModal: show }),
   setShowBusinessPanel: (show) => set({ showBusinessPanel: show }),
   openBusinessPanel: (business) => set({ selectedBusiness: business, showBusinessPanel: true }),
   closeBusinessPanel: () => set({ selectedBusiness: null, showBusinessPanel: false }),
+  setShowSearchThisArea: (show) => set({ showSearchThisArea: show }),
 }));
