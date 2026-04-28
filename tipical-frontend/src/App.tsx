@@ -38,19 +38,25 @@ function AppLayout() {
   );
 }
 
+function accuracyToZoom(accuracy: number): number {
+  return Math.max(10, Math.min(17, Math.round(16 - Math.log2(accuracy / 50))));
+}
+
 function App() {
   const initialLocation = useInitialLocation();
   const setSearchCenter = useSearchStore(s => s.setSearchCenter);
   const searchCenter = useSearchStore(s => s.searchCenter);
   const setCenter = useMapStore(s => s.setCenter);
+  const setZoom = useMapStore(s => s.setZoom);
 
   useEffect(() => {
     if (initialLocation) {
-      const zoom = useMapStore.getState().zoom;
+      const zoom = accuracyToZoom(initialLocation.accuracy);
+      setZoom(zoom);
       setSearchCenter({ ...initialLocation, zoom });
       setCenter({ lat: initialLocation.latitude, lng: initialLocation.longitude });
     }
-  }, [initialLocation, setSearchCenter, setCenter]);
+  }, [initialLocation, setSearchCenter, setCenter, setZoom]);
 
   if (!searchCenter) return <Loading fullScreen />;
 
