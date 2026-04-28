@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { GoogleMap as GoogleMapBase, Marker, useLoadScript } from '@react-google-maps/api';
 import { useMapStore } from '../../stores/mapStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -38,6 +39,7 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
 
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [myLocationContainer, setMyLocationContainer] = useState<HTMLDivElement | null>(null);
 
   // Memoized after isLoaded so google.maps.Size is available; deps array is intentionally [isLoaded].
   const userLocationIcon = useMemo(
@@ -81,6 +83,19 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
   );
 
   const handleLoad = useCallback((m: google.maps.Map) => setMap(m), []);
+
+  useEffect(() => {
+    if (!map) return;
+    const container = document.createElement('div');
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(container);
+    setMyLocationContainer(container);
+    return () => {
+      const slot = map.controls[google.maps.ControlPosition.RIGHT_BOTTOM];
+      const idx = slot.getArray().indexOf(container);
+      if (idx !== -1) slot.removeAt(idx);
+      setMyLocationContainer(null);
+    };
+  }, [map]);
 
   const handleCenterChanged = useCallback(() => {
     const c = map?.getCenter();
@@ -156,14 +171,14 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
         ))}
       </GoogleMapBase>
 
-      {/* My Location button — mirrors Google Maps' own control */}
-      {isSupported && (
+      {/* My Location button — slotted into the map's RIGHT_BOTTOM control layer to avoid overlapping zoom controls */}
+      {myLocationContainer && isSupported && createPortal(
         <button
           onClick={handleMyLocation}
           disabled={gpsLoading}
           title="My location"
           aria-label="Center map on my location"
-          className="absolute bottom-8 right-2.5 bg-white rounded-sm shadow-md p-2 hover:bg-gray-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="m-2.5 bg-white rounded-sm shadow-md p-2 hover:bg-gray-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           {gpsLoading ? (
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" aria-hidden="true" />
@@ -179,7 +194,8 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
               <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
             </svg>
           )}
-        </button>
+        </button>,
+        myLocationContainer
       )}
     </div>
   );
