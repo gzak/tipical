@@ -39,6 +39,7 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
 
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [myLocationContainer, setMyLocationContainer] = useState<HTMLDivElement | null>(null);
 
   // Memoized after isLoaded so google.maps.Size is available; deps array is intentionally [isLoaded].
@@ -56,11 +57,11 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
   // Stable initial center for the map prop — avoids a panTo→onCenterChanged→setCenter→panTo loop.
   const mapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
-    if (latitude !== null && longitude !== null && !gpsCenteredRef.current) {
+    if (map && latitude !== null && longitude !== null && !gpsCenteredRef.current) {
       gpsCenteredRef.current = true;
       const pos = { lat: latitude, lng: longitude };
       setCenter(pos);
-      map?.panTo(pos);
+      map.panTo(pos);
     }
   }, [latitude, longitude, setCenter, map]);
 
@@ -69,13 +70,13 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
       // GPS already acquired — just re-center without re-requesting.
       const pos = { lat: latitude, lng: longitude };
       setCenter(pos);
-      map?.panTo(pos);
+      mapRef.current?.panTo(pos);
     } else {
       // First press — trigger the browser permission prompt and acquire GPS.
       gpsCenteredRef.current = false;
       requestLocation();
     }
-  }, [latitude, longitude, setCenter, map, requestLocation]);
+  }, [latitude, longitude, setCenter, requestLocation]);
 
   const mapOptions = useMemo(
     () => ({
@@ -88,7 +89,10 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     []
   );
 
-  const handleLoad = useCallback((m: google.maps.Map) => setMap(m), []);
+  const handleLoad = useCallback((m: google.maps.Map) => {
+    mapRef.current = m;
+    setMap(m);
+  }, []);
 
   useEffect(() => {
     if (!map) return;
@@ -103,15 +107,19 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     };
   }, [map]);
 
+  // Use mapRef (not map state) so these handlers are stable references created once.
+  // @react-google-maps/api attaches listeners during map init, before the map state
+  // update from handleLoad has been processed — a closure over map state would capture
+  // null and remain a permanent no-op, breaking the "Search this area" button.
   const handleCenterChanged = useCallback(() => {
-    const c = map?.getCenter();
+    const c = mapRef.current?.getCenter();
     if (c) setCenter({ lat: c.lat(), lng: c.lng() });
-  }, [map, setCenter]);
+  }, [setCenter]);
 
   const handleZoomChanged = useCallback(() => {
-    const z = map?.getZoom();
+    const z = mapRef.current?.getZoom();
     if (z !== undefined) setZoom(z);
-  }, [map, setZoom]);
+  }, [setZoom]);
 
   const handleMapClick = useCallback(() => {
     setActiveMarkerId(null);
