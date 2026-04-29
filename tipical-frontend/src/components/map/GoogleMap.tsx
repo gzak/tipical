@@ -22,9 +22,11 @@ interface GoogleMapProps {
   isSearching?: boolean;
   initialCenter: { lat: number; lng: number };
   initialZoom: number;
+  searchBarSlot?: React.ReactNode;
+  userProfileSlot?: React.ReactNode;
 }
 
-export function GoogleMap({ businesses = [], isSearching = false, initialCenter, initialZoom }: GoogleMapProps) {
+export function GoogleMap({ businesses = [], isSearching = false, initialCenter, initialZoom, searchBarSlot, userProfileSlot }: GoogleMapProps) {
   const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
 
   const [center, setCenter] = useState(initialCenter);
@@ -32,6 +34,9 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [myLocationContainer, setMyLocationContainer] = useState<HTMLDivElement | null>(null);
+  const [searchThisAreaContainer, setSearchThisAreaContainer] = useState<HTMLDivElement | null>(null);
+  const [searchBarContainer, setSearchBarContainer] = useState<HTMLDivElement | null>(null);
+  const [userProfileContainer, setUserProfileContainer] = useState<HTMLDivElement | null>(null);
 
   // Safe to create at mount since Maps API is guaranteed loaded before this component renders
   const userLocationIcon = useMemo(
@@ -81,14 +86,25 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
 
   useEffect(() => {
     if (!map) return;
-    const container = document.createElement('div');
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(container);
-    setMyLocationContainer(container);
+    const slots: [google.maps.ControlPosition, React.Dispatch<React.SetStateAction<HTMLDivElement | null>>][] = [
+      [google.maps.ControlPosition.TOP_LEFT, setSearchBarContainer],
+      [google.maps.ControlPosition.TOP_CENTER, setSearchThisAreaContainer],
+      [google.maps.ControlPosition.TOP_RIGHT, setUserProfileContainer],
+      [google.maps.ControlPosition.RIGHT_BOTTOM, setMyLocationContainer],
+    ];
+    const entries = slots.map(([position, setter]) => {
+      const container = document.createElement('div');
+      map.controls[position].push(container);
+      setter(container);
+      return { position, container, setter };
+    });
     return () => {
-      const slot = map.controls[google.maps.ControlPosition.RIGHT_BOTTOM];
-      const idx = slot.getArray().indexOf(container);
-      if (idx !== -1) slot.removeAt(idx);
-      setMyLocationContainer(null);
+      entries.forEach(({ position, container, setter }) => {
+        const slot = map.controls[position];
+        const idx = slot.getArray().indexOf(container);
+        if (idx !== -1) slot.removeAt(idx);
+        setter(null);
+      });
     };
   }, [map]);
 
@@ -107,7 +123,6 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
 
   return (
     <div className="relative w-full h-full">
-      <SearchThisAreaButton center={center} zoom={zoom} isSearching={isSearching} />
       <GoogleMapBase
         mapContainerStyle={MAP_CONTAINER_STYLE}
         center={initialCenter}
@@ -136,6 +151,21 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
           />
         ))}
       </GoogleMapBase>
+
+      {searchBarContainer && searchBarSlot && createPortal(
+        <div className="m-2.5">{searchBarSlot}</div>,
+        searchBarContainer
+      )}
+
+      {searchThisAreaContainer && createPortal(
+        <SearchThisAreaButton center={center} zoom={zoom} isSearching={isSearching} />,
+        searchThisAreaContainer
+      )}
+
+      {userProfileContainer && userProfileSlot && createPortal(
+        <div className="m-2.5">{userProfileSlot}</div>,
+        userProfileContainer
+      )}
 
       {myLocationContainer && isSupported && createPortal(
         <button

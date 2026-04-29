@@ -14,17 +14,15 @@ export function SearchThisAreaButton({ center, zoom, isSearching = false }: Sear
   if (!visible && !isSearching) return null;
 
   return (
-    <div className="absolute top-3 inset-x-0 flex justify-center pointer-events-none z-10">
-      <button
-        onClick={() => setSearchCenter({ latitude: center.lat, longitude: center.lng, zoom })}
-        disabled={isSearching}
-        className="pointer-events-auto inline-flex items-center gap-2 bg-white text-gray-800 text-sm font-medium px-4 py-2 rounded-full shadow-md hover:bg-gray-50 disabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-80 transition-colors border border-gray-200"
-      >
-        {isSearching && (
-          <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" aria-hidden="true" />
-        )}
-        Search this area
-      </button>
-    </div>
+    <button
+      onClick={() => setSearchCenter({ latitude: center.lat, longitude: center.lng, zoom })}
+      disabled={isSearching}
+      className="m-3 inline-flex items-center gap-2 bg-white text-gray-800 text-sm font-medium px-4 py-2 rounded-full shadow-md hover:bg-gray-50 disabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-80 transition-colors border border-gray-200"
+    >
+      {isSearching && (
+        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" aria-hidden="true" />
+      )}
+      Search this area
+    </button>
   );
 }
