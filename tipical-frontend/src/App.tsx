@@ -32,14 +32,14 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      <GoogleMap businesses={businesses} isSearching={isPlaceholderData} initialCenter={initialCenter} initialZoom={initialZoom} />
-
-      <div className="absolute top-4 inset-x-0 z-10 flex items-center justify-center px-4">
-        <SearchBar />
-        <div className="absolute right-4">
-          <UserProfile />
-        </div>
-      </div>
+      <GoogleMap
+        businesses={businesses}
+        isSearching={isPlaceholderData}
+        initialCenter={initialCenter}
+        initialZoom={initialZoom}
+        searchBarSlot={<SearchBar />}
+        userProfileSlot={<UserProfile />}
+      />
 
       <SearchResults />
       <BusinessDetailPanel />
