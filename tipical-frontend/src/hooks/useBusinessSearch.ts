@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { businessService } from '../services/businessService';
 import { radiusFromZoom } from '../utils/geo';
 import type { SearchCenter } from '../stores/searchStore';
@@ -17,6 +17,7 @@ export function useBusinessSearch({ query, searchCenter }: UseBusinessSearchOpti
   return useQuery<Business[]>({
     queryKey: ['businesses', 'search', { query, latitude: roundedLat, longitude: roundedLng, radius }],
     queryFn: () => businessService.search(query?.trim() || undefined, searchCenter.latitude, searchCenter.longitude, radius),
+    placeholderData: keepPreviousData,
   });
 }
 

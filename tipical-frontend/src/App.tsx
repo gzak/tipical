@@ -25,14 +25,14 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
     useShallow(s => ({ searchCenter: s.searchCenter, query: s.query }))
   );
 
-  const { data: businesses = [] } = useBusinessSearch({
+  const { data: businesses = [], isPlaceholderData } = useBusinessSearch({
     query: query.trim() || undefined,
     searchCenter,
   });
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      <GoogleMap businesses={businesses} initialCenter={initialCenter} initialZoom={initialZoom} />
+      <GoogleMap businesses={businesses} isSearching={isPlaceholderData} initialCenter={initialCenter} initialZoom={initialZoom} />
 
       <div className="absolute top-4 inset-x-0 z-10 flex items-center justify-center px-4">
         <SearchBar />

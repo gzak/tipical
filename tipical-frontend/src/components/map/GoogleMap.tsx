@@ -19,11 +19,12 @@ const USER_LOCATION_ICON_URL = `data:image/svg+xml;charset=UTF-8,${USER_LOCATION
 
 interface GoogleMapProps {
   businesses?: Business[];
+  isSearching?: boolean;
   initialCenter: { lat: number; lng: number };
   initialZoom: number;
 }
 
-export function GoogleMap({ businesses = [], initialCenter, initialZoom }: GoogleMapProps) {
+export function GoogleMap({ businesses = [], isSearching = false, initialCenter, initialZoom }: GoogleMapProps) {
   const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
 
   const [center, setCenter] = useState(initialCenter);
@@ -106,7 +107,7 @@ export function GoogleMap({ businesses = [], initialCenter, initialZoom }: Googl
 
   return (
     <div className="relative w-full h-full">
-      <SearchThisAreaButton center={center} zoom={zoom} />
+      <SearchThisAreaButton center={center} zoom={zoom} isSearching={isSearching} />
       <GoogleMapBase
         mapContainerStyle={MAP_CONTAINER_STYLE}
         center={initialCenter}
