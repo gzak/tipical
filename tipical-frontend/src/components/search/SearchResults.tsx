@@ -38,7 +38,7 @@ export function SearchResults() {
 
   const { data: businesses = [], isLoading, error } = useBusinessSearch({
     query: query.trim() || undefined,
-    searchCenter: searchCenter!,
+    searchCenter,
   });
 
   const sorted = [...businesses].sort(sortByPolicy);
