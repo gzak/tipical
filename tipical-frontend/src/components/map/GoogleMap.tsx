@@ -1,15 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { GoogleMap as GoogleMapBase, Marker, useLoadScript } from '@react-google-maps/api';
-import { useMapStore } from '../../stores/mapStore';
+import { GoogleMap as GoogleMapBase, Marker } from '@react-google-maps/api';
 import { useUIStore } from '../../stores/uiStore';
 import { useGeolocation } from '../../hooks';
 import type { Business } from '../../types';
 import { BusinessMarker } from './BusinessMarker';
 import { SearchThisAreaButton } from './SearchThisAreaButton';
-
-// Stable reference — must not be recreated on each render
-const LIBRARIES: ['places'] = ['places'];
 
 const MAP_CONTAINER_STYLE: React.CSSProperties = { width: '100%', height: '100%' };
 
@@ -23,60 +19,41 @@ const USER_LOCATION_ICON_URL = `data:image/svg+xml;charset=UTF-8,${USER_LOCATION
 
 interface GoogleMapProps {
   businesses?: Business[];
+  initialCenter: { lat: number; lng: number };
+  initialZoom: number;
 }
 
-export function GoogleMap({ businesses = [] }: GoogleMapProps) {
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '',
-    libraries: LIBRARIES,
-  });
-
-  const center = useMapStore(s => s.center);
-  const zoom = useMapStore(s => s.zoom);
-  const setCenter = useMapStore(s => s.setCenter);
-  const setZoom = useMapStore(s => s.setZoom);
+export function GoogleMap({ businesses = [], initialCenter, initialZoom }: GoogleMapProps) {
   const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
 
-  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+  const [center, setCenter] = useState(initialCenter);
+  const [zoom, setZoom] = useState(initialZoom);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [myLocationContainer, setMyLocationContainer] = useState<HTMLDivElement | null>(null);
 
-  // Memoized after isLoaded so google.maps.Size is available; deps array is intentionally [isLoaded].
+  // Safe to create at mount since Maps API is guaranteed loaded before this component renders
   const userLocationIcon = useMemo(
-    () => isLoaded ? { url: USER_LOCATION_ICON_URL, scaledSize: new google.maps.Size(20, 20) } : null,
-    [isLoaded] // eslint-disable-line react-hooks/exhaustive-deps
+    () => ({ url: USER_LOCATION_ICON_URL, scaledSize: new google.maps.Size(20, 20) }),
+    []
   );
 
-  // Precise GPS location — only requested when the user clicks "My Location".
   const { isSupported, latitude, longitude, isLoading: gpsLoading, requestLocation } = useGeolocation();
 
-  // Center the map on GPS coordinates once when they first become available.
-  // Reset by handleMyLocation so repeated button presses re-center.
-  const gpsCenteredRef = useRef(false);
-  // Stable initial center for the map prop — avoids a panTo→onCenterChanged→setCenter→panTo loop.
-  const mapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
+  // useGeolocation defaults to watch:false (getCurrentPosition), so this fires at most once
   useEffect(() => {
-    if (map && latitude !== null && longitude !== null && !gpsCenteredRef.current) {
-      gpsCenteredRef.current = true;
-      const pos = { lat: latitude, lng: longitude };
-      setCenter(pos);
-      map.panTo(pos);
+    if (map && latitude !== null && longitude !== null) {
+      map.panTo({ lat: latitude, lng: longitude });
     }
-  }, [latitude, longitude, setCenter, map]);
+  }, [latitude, longitude, map]);
 
   const handleMyLocation = useCallback(() => {
     if (latitude !== null && longitude !== null) {
-      // GPS already acquired — just re-center without re-requesting.
-      const pos = { lat: latitude, lng: longitude };
-      setCenter(pos);
-      mapRef.current?.panTo(pos);
+      map?.panTo({ lat: latitude, lng: longitude });
     } else {
-      // First press — trigger the browser permission prompt and acquire GPS.
-      gpsCenteredRef.current = false;
       requestLocation();
     }
-  }, [latitude, longitude, setCenter, requestLocation]);
+  }, [latitude, longitude, map, requestLocation]);
 
   const mapOptions = useMemo(
     () => ({
@@ -90,9 +67,16 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
   );
 
   const handleLoad = useCallback((m: google.maps.Map) => {
-    mapRef.current = m;
     setMap(m);
   }, []);
+
+  // onIdle fires after the map settles; safe to close over map state since it only fires post-load
+  const handleIdle = useCallback(() => {
+    const c = map?.getCenter();
+    const z = map?.getZoom();
+    if (c) setCenter({ lat: c.lat(), lng: c.lng() });
+    if (z !== undefined) setZoom(z);
+  }, [map]);
 
   useEffect(() => {
     if (!map) return;
@@ -107,20 +91,6 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     };
   }, [map]);
 
-  // Use mapRef (not map state) so these handlers are stable references created once.
-  // @react-google-maps/api attaches listeners during map init, before the map state
-  // update from handleLoad has been processed — a closure over map state would capture
-  // null and remain a permanent no-op, breaking the "Search this area" button.
-  const handleCenterChanged = useCallback(() => {
-    const c = mapRef.current?.getCenter();
-    if (c) setCenter({ lat: c.lat(), lng: c.lng() });
-  }, [setCenter]);
-
-  const handleZoomChanged = useCallback(() => {
-    const z = mapRef.current?.getZoom();
-    if (z !== undefined) setZoom(z);
-  }, [setZoom]);
-
   const handleMapClick = useCallback(() => {
     setActiveMarkerId(null);
     closeBusinessPanel();
@@ -134,50 +104,27 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
     setActiveMarkerId(null);
   }, []);
 
-  if (loadError) {
-    return (
-      <div className="flex items-center justify-center w-full h-full bg-gray-100">
-        <p className="text-red-600 font-medium">Failed to load Google Maps</p>
-      </div>
-    );
-  }
-
-  if (!isLoaded || !center) {
-    return (
-      <div className="flex items-center justify-center w-full h-full bg-gray-100">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
-
-  // Capture the initial center once. Passing a reactive store value as the center prop
-  // would create a feedback loop: onCenterChanged → setCenter → new object ref → panTo → repeat.
-  if (!mapCenterRef.current) mapCenterRef.current = center;
-
   return (
     <div className="relative w-full h-full">
-      <SearchThisAreaButton />
+      <SearchThisAreaButton center={center} zoom={zoom} />
       <GoogleMapBase
         mapContainerStyle={MAP_CONTAINER_STYLE}
-        center={mapCenterRef.current}
-        zoom={zoom}
+        center={initialCenter}
+        zoom={initialZoom}
         options={mapOptions}
         onLoad={handleLoad}
-        onCenterChanged={handleCenterChanged}
-        onZoomChanged={handleZoomChanged}
+        onIdle={handleIdle}
         onClick={handleMapClick}
       >
-        {/* GPS user location blue dot — only shown after permission is granted */}
         {latitude !== null && longitude !== null && (
           <Marker
             position={{ lat: latitude, lng: longitude }}
-            icon={userLocationIcon!}
+            icon={userLocationIcon}
             title="Your location"
             zIndex={1000}
           />
         )}
 
-        {/* Business markers */}
         {businesses.map(business => (
           <BusinessMarker
             key={business.id}
@@ -189,7 +136,6 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
         ))}
       </GoogleMapBase>
 
-      {/* My Location button — slotted into the map's RIGHT_BOTTOM control layer to avoid overlapping zoom controls */}
       {myLocationContainer && isSupported && createPortal(
         <button
           onClick={handleMyLocation}
@@ -208,7 +154,6 @@ export function GoogleMap({ businesses = [] }: GoogleMapProps) {
               fill="currentColor"
               aria-hidden="true"
             >
-              {/* Material gps_fixed icon */}
               <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
             </svg>
           )}
