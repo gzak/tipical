@@ -1,0 +1,159 @@
+name: Deploy to Test
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGION: us-central1
+
+jobs:
+  build-and-push-image:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - id: meta
+        run: echo "image=us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/tipical/api:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        run: |
+          docker build -t ${{ steps.meta.outputs.image }} tipical-backend/
+          docker push ${{ steps.meta.outputs.image }}
+
+  run-migrations-test:
+    name: Run Migrations (Test)
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Create or update migration job
+        run: |
+          if gcloud run jobs describe tipical-migrate-test --region ${{ env.REGION }} >/dev/null 2>&1; then
+            gcloud run jobs update tipical-migrate-test \
+              --image ${{ needs.build-and-push-image.outputs.image }} \
+              --region ${{ env.REGION }}
+          else
+            gcloud run jobs create tipical-migrate-test \
+              --image ${{ needs.build-and-push-image.outputs.image }} \
+              --command /app/efbundle \
+              --region ${{ env.REGION }} \
+              --set-secrets ConnectionStrings__DefaultConnection=test-db-connection-string:latest \
+              --add-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
+              --service-account tipical-api-test@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+              --max-retries 0
+          fi
+
+      - name: Execute migrations
+        run: |
+          gcloud run jobs execute tipical-migrate-test \
+            --region ${{ env.REGION }} \
+            --wait
+
+  deploy-api-test:
+    name: Deploy API (Test)
+    needs: [build-and-push-image, run-migrations-test]
+    runs-on: ubuntu-latest
+    environment: test
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          gcloud run deploy tipical-api-test \
+            --image ${{ needs.build-and-push-image.outputs.image }} \
+            --region ${{ env.REGION }} \
+            --add-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
+            --set-secrets "ConnectionStrings__DefaultConnection=test-db-connection-string:latest,GooglePlaces__ApiKey=test-google-places-api-key:latest,GoogleOAuth__ClientId=test-google-oauth-client-id:latest,JwtSettings__Secret=test-jwt-secret:latest" \
+            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|Cors__AllowedOrigins__0=https://tipical-test.web.app|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}|AllowedUsers__Emails=${{ vars.ALLOWED_USERS_EMAILS }}" \
+            --service-account tipical-api-test@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --allow-unauthenticated \
+            --quiet
+
+          URL=$(gcloud run services describe tipical-api-test \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+  build-and-deploy-frontend-test:
+    name: Build and Deploy Frontend (Test)
+    needs: deploy-api-test
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: tipical-frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: tipical-frontend
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ vars.VITE_GOOGLE_OAUTH_CLIENT_ID }}
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Firebase Hosting
+        run: firebase deploy --only hosting:tipical-test
+
+  smoke-test-test:
+    name: Smoke Test (Test)
+    needs: [build-and-deploy-frontend-test, deploy-api-test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Smoke test
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ needs.deploy-api-test.outputs.url }}/api/v1/businesses/search?latitude=47.6062&longitude=-122.3321&radius=5000")
+          if [ "$STATUS" != "200" ]; then
+            echo "Smoke test failed: expected 200, got $STATUS"
+            exit 1
+          fi
+          echo "Smoke test passed: $STATUS"
