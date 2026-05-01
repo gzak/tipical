@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "tipical"
+  },
+  "targets": {
+    "tipical": {
+      "hosting": {
+        "tipical-test": [
+          "tipical-test"
+        ],
+        "tipical": [
+          "tipical"
+        ]
+      }
+    }
+  }
+}
