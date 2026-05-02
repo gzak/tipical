@@ -14,7 +14,8 @@ public class AllowedUserConfiguration : IEntityTypeConfiguration<AllowedUser>
 
         builder.Property(u => u.Id)
             .HasColumnName("id")
-            .ValueGeneratedNever();
+            .ValueGeneratedOnAdd()
+            .HasDefaultValueSql("uuidv7()");
 
         builder.Property(u => u.Email)
             .HasColumnName("email")
