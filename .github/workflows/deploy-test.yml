@@ -15,6 +15,8 @@ jobs:
   build-and-push-image:
     name: Build and Push Image
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,15 +27,18 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
+      - id: meta
+        run: echo "image=us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/tipical/api:${{ github.sha }}" >> $GITHUB_OUTPUT
+
       - name: Build and push
         run: |
-          docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/tipical/api:${{ github.sha }} tipical-backend/
-          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/tipical/api:${{ github.sha }}
+          docker build -t ${{ steps.meta.outputs.image }} tipical-backend/
+          docker push ${{ steps.meta.outputs.image }}
 
   run-migrations-test:
     name: Run Migrations (Test)
@@ -47,22 +52,22 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
 
       - name: Create or update migration job
         run: |
           if gcloud run jobs describe tipical-migrate-test --region ${{ env.REGION }} >/dev/null 2>&1; then
             gcloud run jobs update tipical-migrate-test \
-              --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/tipical/api:${{ github.sha }} \
+              --image ${{ needs.build-and-push-image.outputs.image }} \
               --region ${{ env.REGION }}
           else
             gcloud run jobs create tipical-migrate-test \
-              --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/tipical/api:${{ github.sha }} \
+              --image ${{ needs.build-and-push-image.outputs.image }} \
               --command /app/efbundle \
               --region ${{ env.REGION }} \
               --set-secrets ConnectionStrings__DefaultConnection=test-db-connection-string:latest \
-              --set-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
-              --service-account tipical-api-test@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+              --set-cloudsql-instances ${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
+              --service-account tipical-api-test@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
               --max-retries 0
           fi
 
@@ -74,7 +79,7 @@ jobs:
 
   deploy-api-test:
     name: Deploy API (Test)
-    needs: run-migrations-test
+    needs: [build-and-push-image, run-migrations-test]
     runs-on: ubuntu-latest
     environment: test
     outputs:
@@ -87,18 +92,18 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
 
       - name: Deploy to Cloud Run
         id: deploy
         run: |
           gcloud run deploy tipical-api-test \
-            --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/tipical/api:${{ github.sha }} \
+            --image ${{ needs.build-and-push-image.outputs.image }} \
             --region ${{ env.REGION }} \
-            --add-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
+            --add-cloudsql-instances ${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
             --set-secrets "ConnectionStrings__DefaultConnection=test-db-connection-string:latest,GooglePlaces__ApiKey=test-google-places-api-key:latest,GoogleOAuth__ClientId=test-google-oauth-client-id:latest,JwtSettings__Secret=test-jwt-secret:latest" \
             --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|Cors__AllowedOrigins__0=https://tipical-test.web.app|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}|AllowedUsers__Emails=${{ vars.ALLOWED_USERS_EMAILS }}" \
-            --service-account tipical-api-test@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --service-account tipical-api-test@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --quiet
 
