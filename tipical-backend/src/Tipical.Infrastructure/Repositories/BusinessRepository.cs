@@ -12,14 +12,14 @@ public class BusinessRepository(ApplicationDbContext context) : IBusinessReposit
     {
         return await context.Businesses
             .Include(b => b.TippingVotes)
-            .FirstOrDefaultAsync(b => b.Id == id);
+            .SingleOrDefaultAsync(b => b.Id == id);
     }
 
     public async Task<Business?> GetByGooglePlaceIdAsync(string googlePlaceId)
     {
         return await context.Businesses
             .Include(b => b.TippingVotes)
-            .FirstOrDefaultAsync(b => b.GooglePlaceId == googlePlaceId);
+            .SingleOrDefaultAsync(b => b.GooglePlaceId == googlePlaceId);
     }
 
     public async Task<Dictionary<string, Business>> GetByGooglePlaceIdsAsync(IEnumerable<string> googlePlaceIds)
@@ -32,11 +32,16 @@ public class BusinessRepository(ApplicationDbContext context) : IBusinessReposit
 
     public async Task<Business> GetOrCreateAsync(string googlePlaceId)
     {
-        await context.Upsert(new Business { Id = Guid.NewGuid(), GooglePlaceId = googlePlaceId })
+        var business = await GetByGooglePlaceIdAsync(googlePlaceId);
+        if (business is not null)
+            return business;
+
+        await context.Upsert(new Business { GooglePlaceId = googlePlaceId })
             .On(b => b.GooglePlaceId)
-            .WhenMatched(b => new Business { GooglePlaceId = b.GooglePlaceId })
+            .NoUpdate()
             .RunAsync();
 
-        return await context.Businesses.FirstAsync(b => b.GooglePlaceId == googlePlaceId);
+        return await GetByGooglePlaceIdAsync(googlePlaceId)
+            ?? throw new InvalidOperationException($"Business with GooglePlaceId '{googlePlaceId}' not found after upsert.");
     }
 }
