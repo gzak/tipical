@@ -61,7 +61,7 @@ jobs:
               --command /app/efbundle \
               --region ${{ env.REGION }} \
               --set-secrets ConnectionStrings__DefaultConnection=test-db-connection-string:latest \
-              --add-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
+              --set-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
               --service-account tipical-api-test@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
               --max-retries 0
           fi
