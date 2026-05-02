@@ -102,7 +102,7 @@ jobs:
             --region ${{ env.REGION }} \
             --add-cloudsql-instances ${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-test \
             --set-secrets "ConnectionStrings__DefaultConnection=test-db-connection-string:latest,GooglePlaces__ApiKey=test-google-places-api-key:latest,GoogleOAuth__ClientId=test-google-oauth-client-id:latest,JwtSettings__Secret=test-jwt-secret:latest" \
-            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|Cors__AllowedOrigins__0=https://tipical-test.web.app|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}|AllowedUsers__Emails=${{ vars.ALLOWED_USERS_EMAILS }}" \
+            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|Cors__AllowedOrigins__0=https://tipical-test.web.app|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}" \
             --service-account tipical-api-test@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --quiet
