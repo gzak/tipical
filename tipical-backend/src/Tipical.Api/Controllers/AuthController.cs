@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Tipical.Core.DTOs;
 using Tipical.Core.Services;
+using Tipical.Infrastructure.Data;
 
 namespace Tipical.Api.Controllers;
 
@@ -11,6 +13,7 @@ namespace Tipical.Api.Controllers;
 public class AuthController(
     IGoogleAuthService googleAuthService,
     IOptions<AllowedUsersOptions> allowedUsers,
+    ApplicationDbContext dbContext,
     ILogger<AuthController> logger) : ControllerBase
 {
     [HttpPost("google")]
@@ -23,12 +26,14 @@ public class AuthController(
         {
             var response = await googleAuthService.VerifyGoogleTokenAsync(request.IdToken);
 
-            var options = allowedUsers.Value;
-            var emailList = options.Emails.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (options.Enabled && !emailList.Contains(response.Email, StringComparer.OrdinalIgnoreCase))
+            if (allowedUsers.Value.Enabled)
             {
-                logger.LogWarning("Blocked sign-in attempt from non-allowlisted email: {Email}", response.Email);
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = "Access restricted" });
+                var isAllowed = await dbContext.AllowedUsers.AnyAsync(u => EF.Functions.ILike(u.Email, response.Email));
+                if (!isAllowed)
+                {
+                    logger.LogWarning("Blocked sign-in attempt from non-allowlisted email: {Email}", response.Email);
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "Access restricted" });
+                }
             }
 
             return Ok(response);
