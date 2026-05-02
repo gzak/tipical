@@ -5,6 +5,7 @@ namespace Tipical.Infrastructure.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
+    public DbSet<AllowedUser> AllowedUsers { get; set; }
     public DbSet<Business> Businesses { get; set; }
     public DbSet<TippingVote> TippingVotes { get; set; }
 
