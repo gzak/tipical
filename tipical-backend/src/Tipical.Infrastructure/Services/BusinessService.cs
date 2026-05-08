@@ -8,85 +8,77 @@ namespace Tipical.Infrastructure.Services;
 
 public class BusinessService(
     IBusinessRepository businessRepository,
-    ITippingVoteRepository tippingVoteRepository,
     IGooglePlacesService googlePlacesService) : IBusinessService
 {
+    private const int MaxResults = 20;
+
     public async Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request)
     {
-        // Search Google Places API — text search when query is provided, nearby search otherwise
-        IEnumerable<Place> places;
-        if (string.IsNullOrWhiteSpace(request.Query))
+        // Step 1: Query DB for known businesses near the requested location, sorted by policy priority
+        var dbBusinesses = await businessRepository.SearchNearbyAsync(
+            request.Latitude, request.Longitude, request.Radius, MaxResults);
+
+        // Step 2: Backfill with Google Places if under the cap
+        var placesById = new Dictionary<string, Place>();
+        IEnumerable<Place> backfillPlaces = [];
+
+        if (dbBusinesses.Count < MaxResults)
         {
-            var nearbyResults = await googlePlacesService.SearchNearbyAsync(
-                request.Latitude,
-                request.Longitude,
-                request.Radius);
-            places = nearbyResults.Places;
-        }
-        else
-        {
-            var textResults = await googlePlacesService.SearchAsync(
-                request.Query,
-                request.Latitude,
-                request.Longitude,
-                request.Radius);
-            places = textResults.Places;
-        }
-
-        // Extract all Google Place IDs
-        var googlePlaceIds = places.Select(p => p.Id).ToList();
-
-        // Single bulk lookup for all businesses
-        var existingBusinesses = await businessRepository.GetByGooglePlaceIdsAsync(googlePlaceIds);
-
-        var businessResponses = new List<BusinessResponse>();
-
-        foreach (var place in places)
-        {
-            // Check if business exists in database (has votes)
-            if (existingBusinesses.TryGetValue(place.Id, out var business))
+            var remaining = MaxResults - dbBusinesses.Count;
+            IEnumerable<Place> places;
+            if (string.IsNullOrWhiteSpace(request.Query))
             {
-                // Business exists - merge Google Places data with vote data
-                var businessResponse = await MapToBusinessResponseAsync(business, place);
-                businessResponses.Add(businessResponse);
+                var result = await googlePlacesService.SearchNearbyAsync(
+                    request.Latitude, request.Longitude, request.Radius,
+                    maxResultCount: MaxResults);
+                places = result.Places;
             }
             else
             {
-                // Placeholder - business not voted on yet
-                var placeholderResponse = new BusinessResponse
-                {
-                    GooglePlaceId = place.Id,
-                    Name = place.DisplayName.Text,
-                    Address = place.FormattedAddress,
-                    Latitude = (decimal)place.Location.Latitude,
-                    Longitude = (decimal)place.Location.Longitude,
-                    PlaceTypes = [.. place.Types_],
-                    Phone = place.InternationalPhoneNumber,
-                    Website = place.WebsiteUri,
-                    WinningPolicy = null, // Indicates placeholder
-                    WinningPolicyVoteCount = null
-                };
-                businessResponses.Add(placeholderResponse);
+                var result = await googlePlacesService.SearchAsync(
+                    request.Query, request.Latitude, request.Longitude, request.Radius,
+                    maxResultCount: MaxResults);
+                places = result.Places;
             }
+
+            placesById = places.ToDictionary(p => p.Id);
+
+            var knownPlaceIds = dbBusinesses.Select(b => b.GooglePlaceId).ToHashSet();
+            backfillPlaces = places
+                .Where(p => !knownPlaceIds.Contains(p.Id))
+                .Take(remaining);
         }
 
-        // Sort by tipping policy ranking (NoTips first, then TipsExcludeTax, then TipsIncludeTax, then Unknown/placeholders)
-        return [.. businessResponses.OrderBy(b => b.WinningPolicy.HasValue ? (int)b.WinningPolicy.Value : 999)];
+        // Step 3: Bulk-fetch any DB businesses not returned by the Places search above
+        var missingFromSearch = dbBusinesses
+            .Where(b => !placesById.ContainsKey(b.GooglePlaceId))
+            .Select(b => b.GooglePlaceId)
+            .ToList();
+        if (missingFromSearch.Count > 0)
+        {
+            var fetched = await googlePlacesService.BulkFetchAsync(missingFromSearch);
+            foreach (var place in fetched)
+                placesById[place.Id] = place;
+        }
+
+        // Step 4: Build responses for DB businesses (already sorted by policy from the query).
+        //         Enrich with Google Places display data when available.
+        var dbResponses = dbBusinesses
+            .Select(b => MapDbBusinessToResponse(b, placesById[b.GooglePlaceId]));
+
+        // Step 5: Append placeholder responses for Google Places backfill
+        var backfillResponses = backfillPlaces.Select(MapPlaceToResponse);
+
+        return [.. dbResponses, .. backfillResponses];
     }
 
-    private async Task<BusinessResponse> MapToBusinessResponseAsync(Business business, Place place)
+    private static BusinessResponse MapDbBusinessToResponse(Business business, Place place)
     {
-        var voteCounts = await tippingVoteRepository.GetVoteCountsByPolicyAsync(business.Id);
-
-        TippingPolicy? winningPolicy = null;
-        int? winningPolicyVoteCount = null;
-
-        if (voteCounts.Count != 0)
-        {
-            var winner = voteCounts.OrderByDescending(kvp => kvp.Value).First();
-            winningPolicy = winner.Key;
-            winningPolicyVoteCount = winner.Value;
-        }
+        var winner = business.TippingVotes
+            .GroupBy(v => v.TippingPolicy)
+            .Select(g => (Policy: g.Key, Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .First();
 
         return new BusinessResponse
         {
@@ -99,8 +91,23 @@ public class BusinessService(
             PlaceTypes = [.. place.Types_],
             Phone = !string.IsNullOrWhiteSpace(place.InternationalPhoneNumber) ? place.InternationalPhoneNumber : null,
             Website = !string.IsNullOrWhiteSpace(place.WebsiteUri) ? place.WebsiteUri : null,
-            WinningPolicy = winningPolicy,
-            WinningPolicyVoteCount = winningPolicyVoteCount
+            WinningPolicy = winner.Policy,
+            WinningPolicyVoteCount = winner.Count
         };
     }
+
+    private static BusinessResponse MapPlaceToResponse(Place place) =>
+        new()
+        {
+            GooglePlaceId = place.Id,
+            Name = place.DisplayName.Text,
+            Address = place.FormattedAddress,
+            Latitude = (decimal)place.Location.Latitude,
+            Longitude = (decimal)place.Location.Longitude,
+            PlaceTypes = [.. place.Types_],
+            Phone = !string.IsNullOrWhiteSpace(place.InternationalPhoneNumber) ? place.InternationalPhoneNumber : null,
+            Website = !string.IsNullOrWhiteSpace(place.WebsiteUri) ? place.WebsiteUri : null,
+            WinningPolicy = null,
+            WinningPolicyVoteCount = null
+        };
 }

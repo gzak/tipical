@@ -1,16 +1,18 @@
+using Google.Protobuf.Collections;
+
 namespace Tipical.Infrastructure.Tests;
 
 public class FieldMaskBuilderTests
 {
     private sealed class TestResponse
     {
-        public List<TestItem> Items { get; set; } = [];
+        public RepeatedField<TestItem> Items { get; set; } = [];
         public TestParent Parent { get; set; } = new();
     }
 
     private sealed class TestParent
     {
-        public List<TestItem> Items { get; set; } = [];
+        public RepeatedField<TestItem> Items { get; set; } = [];
     }
 
     private sealed class TestItem
@@ -157,5 +159,27 @@ public class FieldMaskBuilderTests
             .Build();
 
         await Assert.That(mask).IsEqualTo("items.sub.languageCode");
+    }
+
+    [Test]
+    public async Task RootLevelScalarSelection()
+    {
+        var mask = FieldMask.For<TestItem>()
+            .Include(i => new { i.Id, i.Name, i.Types_ })
+            .Build();
+
+        await Assert.That(mask).IsEqualTo("id,name,types");
+    }
+
+    [Test]
+    public async Task ThenInclude_AfterAnonymousTypeInclude_NoLeadingDot()
+    {
+        var mask = FieldMask.For<TestResponse>()
+            .Include(r => new { r.Parent })
+            .ThenInclude(a => a.Parent)
+            .ThenInclude(p => new { p.Items })
+            .Build();
+
+        await Assert.That(mask).IsEqualTo("parent,parent.items");
     }
 }

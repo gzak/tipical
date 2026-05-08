@@ -8,6 +8,11 @@ namespace Tipical.Infrastructure.Services;
 
 public class GooglePlacesService : IGooglePlacesService
 {
+    private static readonly CallSettings GetPlaceSettings =
+        FieldMask.For<Place>()
+            .Include(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location })
+            .ToCallSettings();
+
     private static readonly CallSettings NearbySearchSettings =
         FieldMask.For<SearchNearbyResponse>()
             .Include(r => r.Places)
@@ -30,12 +35,12 @@ public class GooglePlacesService : IGooglePlacesService
         }.Build();
     }
 
-    public async Task<SearchTextResponse> SearchAsync(string query, double latitude, double longitude, int radius)
+    public async Task<SearchTextResponse> SearchAsync(string query, double latitude, double longitude, int radius, int maxResultCount = 20)
     {
         return await _client.SearchTextAsync(new SearchTextRequest
         {
             TextQuery = query,
-            MaxResultCount = 20,
+            MaxResultCount = maxResultCount,
             IncludedType = "establishment",
             LocationBias = new SearchTextRequest.Types.LocationBias
             {
@@ -48,11 +53,11 @@ public class GooglePlacesService : IGooglePlacesService
         }, TextSearchSettings);
     }
 
-    public async Task<SearchNearbyResponse> SearchNearbyAsync(double latitude, double longitude, int radius)
+    public async Task<SearchNearbyResponse> SearchNearbyAsync(double latitude, double longitude, int radius, int maxResultCount = 20)
     {
         return await _client.SearchNearbyAsync(new SearchNearbyRequest
         {
-            MaxResultCount = 20,
+            MaxResultCount = maxResultCount,
             IncludedTypes = { "restaurant", "cafe", "coffee_shop", "bar" },
             LocationRestriction = new SearchNearbyRequest.Types.LocationRestriction
             {
@@ -63,6 +68,16 @@ public class GooglePlacesService : IGooglePlacesService
                 }
             }
         }, NearbySearchSettings);
+    }
+
+    public async Task<IReadOnlyList<Place>> BulkFetchAsync(IEnumerable<string> placeIds)
+    {
+        var tasks = placeIds.Select(async id =>
+        {
+            try { return await _client.GetPlaceAsync(new GetPlaceRequest { Name = $"places/{id}" }, GetPlaceSettings); }
+            catch { return null; }
+        });
+        return (await Task.WhenAll(tasks)).Where(p => p != null).Select(p => p!).ToList();
     }
 
     public async Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double latitude, double longitude, int radius)

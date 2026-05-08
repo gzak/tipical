@@ -4,26 +4,26 @@ import { tippingService } from '../services/tippingService';
 import { useAuthStore } from '../stores/authStore';
 import type { Business, TippingVote, TippingVotesAggregate, TippingPolicy } from '../types';
 
-export function useTippingData(googlePlaceId: string | null) {
+export function useTippingData(business: Business) {
+  const { googlePlaceId } = business;
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore(s => s.isAuthenticated());
 
   const votesQuery = useQuery<TippingVotesAggregate>({
     queryKey: ['tipping', 'votes', googlePlaceId],
-    queryFn: () => tippingService.getVotes(googlePlaceId!),
-    enabled: Boolean(googlePlaceId),
+    queryFn: () => tippingService.getVotes(googlePlaceId),
   });
 
   const userVoteQuery = useQuery<TippingVote | null>({
     queryKey: ['tipping', 'userVote', googlePlaceId],
-    queryFn: () => tippingService.getUserVote(googlePlaceId!),
-    enabled: Boolean(googlePlaceId) && isAuthenticated,
+    queryFn: () => tippingService.getUserVote(googlePlaceId),
+    enabled: isAuthenticated,
   });
 
   // Mirror the latest aggregate into every business search cache entry so map
   // pins reflect the current winning policy without a separate search refetch.
   useEffect(() => {
-    if (!votesQuery.data || !googlePlaceId) return;
+    if (!votesQuery.data) return;
     const { winningPolicy, winningPolicyVoteCount } = votesQuery.data;
     queryClient.setQueriesData<Business[]>(
       { queryKey: ['businesses', 'search'], exact: false },
@@ -38,7 +38,12 @@ export function useTippingData(googlePlaceId: string | null) {
 
   const submitVoteMutation = useMutation<TippingVote, Error, TippingPolicy>({
     mutationFn: (policy) =>
-      tippingService.submitVote(googlePlaceId!, { tippingPolicy: policy }),
+      tippingService.submitVote(googlePlaceId, {
+        tippingPolicy: policy,
+        name: business.name,
+        latitude: business.latitude,
+        longitude: business.longitude,
+      }),
     onSuccess: (data) => {
       queryClient.setQueryData(['tipping', 'userVote', googlePlaceId], data);
       queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', googlePlaceId] });
@@ -50,10 +55,7 @@ export function useTippingData(googlePlaceId: string | null) {
     userVote: userVoteQuery.data ?? null,
     isLoading: votesQuery.isLoading || userVoteQuery.isLoading,
     error: votesQuery.error ?? userVoteQuery.error,
-    submitVote: (policy: TippingPolicy) => {
-      if (!googlePlaceId) return;
-      submitVoteMutation.mutate(policy);
-    },
+    submitVote: (policy: TippingPolicy) => submitVoteMutation.mutate(policy),
     isSubmitting: submitVoteMutation.isPending,
     submitError: submitVoteMutation.error,
   };

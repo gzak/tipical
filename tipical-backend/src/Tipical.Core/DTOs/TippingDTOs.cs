@@ -4,7 +4,10 @@ namespace Tipical.Core.DTOs;
 
 public class TippingVoteRequest
 {
-    public TippingPolicy TippingPolicy { get; set; }
+    public required TippingPolicy TippingPolicy { get; set; }
+    public required string Name { get; set; }
+    public required double Latitude { get; set; }
+    public required double Longitude { get; set; }
 }
 
 public class TippingVoteResponse

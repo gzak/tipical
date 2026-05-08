@@ -53,7 +53,8 @@ public class TippingController(ITippingService tippingService, ILogger<TippingCo
             return Unauthorized(new { message = "User ID not found in token" });
         }
 
-        var vote = await tippingService.SubmitVoteAsync(googlePlaceId, userId, request.TippingPolicy);
+        var vote = await tippingService.SubmitVoteAsync(
+            googlePlaceId, userId, request.TippingPolicy, request.Name, request.Latitude, request.Longitude);
         return Ok(vote);
     }
 }

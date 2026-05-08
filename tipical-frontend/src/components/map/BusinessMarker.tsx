@@ -37,8 +37,8 @@ export function BusinessMarker({
   );
 
   const handleClick = useCallback(
-    () => onMarkerClick(business.id),
-    [onMarkerClick, business.id]
+    () => onMarkerClick(business.googlePlaceId),
+    [onMarkerClick, business.googlePlaceId]
   );
 
   const icon = useMemo(
