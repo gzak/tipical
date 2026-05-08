@@ -28,7 +28,6 @@ public class TippingVoteRepository(ApplicationDbContext context) : ITippingVoteR
         await context.TippingVotes
             .Upsert(new TippingVote
             {
-                Id = Guid.NewGuid(),
                 BusinessId = businessId,
                 UserId = userId,
                 TippingPolicy = policy,

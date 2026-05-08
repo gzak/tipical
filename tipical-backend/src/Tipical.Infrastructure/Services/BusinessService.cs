@@ -55,7 +55,6 @@ public class BusinessService(
                 // Placeholder - business not voted on yet
                 var placeholderResponse = new BusinessResponse
                 {
-                    Id = Guid.NewGuid(), // Temporary GUID (not persisted)
                     GooglePlaceId = place.Id,
                     Name = place.DisplayName.Text,
                     Address = place.FormattedAddress,
