@@ -33,7 +33,7 @@ const POLICY_OPTIONS: PolicyOption[] = [
 ];
 
 interface TippingPolicySelectorProps {
-  business: Pick<Business, 'googlePlaceId'>;
+  business: Business;
 }
 
 export function TippingPolicySelector({ business }: TippingPolicySelectorProps) {
