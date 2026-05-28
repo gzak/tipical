@@ -143,9 +143,9 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
 
         {businesses.map(business => (
           <BusinessMarker
-            key={business.id}
+            key={business.googlePlaceId}
             business={business}
-            isActive={activeMarkerId === business.id}
+            isActive={activeMarkerId === business.googlePlaceId}
             onMarkerClick={handleMarkerClick}
             onInfoWindowClose={handleInfoWindowClose}
           />

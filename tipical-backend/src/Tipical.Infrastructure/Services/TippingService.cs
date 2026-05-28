@@ -1,16 +1,26 @@
+using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using Tipical.Core.DTOs;
 using Tipical.Core.Repositories;
 using Tipical.Core.Models;
 using Tipical.Core.Services;
+using Tipical.Infrastructure.Data;
 
 namespace Tipical.Infrastructure.Services;
 
-public class TippingService(ITippingVoteRepository tippingVoteRepository, IBusinessRepository businessRepository) : ITippingService
+public class TippingService(
+    ITippingVoteRepository tippingVoteRepository,
+    IBusinessRepository businessRepository,
+    ApplicationDbContext context) : ITippingService
 {
-    public async Task<TippingVoteResponse> SubmitVoteAsync(string googlePlaceId, string userId, TippingPolicy policy)
+    public async Task<TippingVoteResponse> SubmitVoteAsync(string googlePlaceId, string userId, TippingPolicy policy, string name, double latitude, double longitude)
     {
-        var business = await businessRepository.GetOrCreateAsync(googlePlaceId);
+        var location = new Point(longitude, latitude) { SRID = GeoConstants.Wgs84Srid };
+
+        await using var tx = await context.Database.BeginTransactionAsync();
+        var business = await businessRepository.GetOrCreateAsync(googlePlaceId, name, location);
         var vote = await tippingVoteRepository.UpsertAsync(business.Id, userId, policy);
+        await tx.CommitAsync();
 
         return new TippingVoteResponse
         {

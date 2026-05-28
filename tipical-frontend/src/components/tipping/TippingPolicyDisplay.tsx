@@ -1,5 +1,5 @@
 import { useTippingData } from '../../hooks';
-import type { TippingPolicy as TippingPolicyType } from '../../types';
+import type { Business, TippingPolicy as TippingPolicyType } from '../../types';
 import { TippingPolicy } from '../../types';
 
 const POLICY_LABELS: Record<TippingPolicyType, string> = {
@@ -15,11 +15,11 @@ const POLICY_BADGE_STYLES: Record<TippingPolicyType, string> = {
 };
 
 interface TippingPolicyDisplayProps {
-  googlePlaceId: string;
+  business: Business;
 }
 
-export function TippingPolicyDisplay({ googlePlaceId }: TippingPolicyDisplayProps) {
-  const { votes, isLoading, error } = useTippingData(googlePlaceId);
+export function TippingPolicyDisplay({ business }: TippingPolicyDisplayProps) {
+  const { votes, isLoading, error } = useTippingData(business);
 
   if (isLoading) {
     return <div className="animate-pulse h-12 bg-gray-100 rounded-lg" />;

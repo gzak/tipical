@@ -21,7 +21,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        o => o.MapEnum<TippingPolicy>()
+        o => o.MapEnum<TippingPolicy>().UseNetTopologySuite()
     )
 );
 

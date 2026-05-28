@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Google.Api.Gax.Grpc;
+using Google.Protobuf.Collections;
 
 namespace Tipical.Infrastructure;
 
@@ -14,9 +15,23 @@ public sealed class FieldMaskRoot<TRoot>
     private readonly List<string> _pathList = [];
 
     public FieldMaskNode<TRoot, TElement> Include<TElement>(
-        Expression<Func<TRoot, IEnumerable<TElement>>> selector)
+        Expression<Func<TRoot, RepeatedField<TElement>>> selector)
     {
         var path = GetMemberName(selector.Body);
+        return new FieldMaskNode<TRoot, TElement>(this, path);
+    }
+
+    public FieldMaskNode<TRoot, TElement> Include<TElement>(Expression<Func<TRoot, TElement>> selector)
+    {
+        if (selector.Body is NewExpression newExpr)
+        {
+            foreach (var arg in newExpr.Arguments)
+                AddPath(GetMemberName(arg));
+            return new FieldMaskNode<TRoot, TElement>(this, string.Empty);
+        }
+
+        var path = GetMemberName(selector.Body);
+        AddPath(path);
         return new FieldMaskNode<TRoot, TElement>(this, path);
     }
 
@@ -70,16 +85,20 @@ public sealed class FieldMaskNode<TRoot, TCurrent>
         if (selector.Body is NewExpression newExpr)
         {
             foreach (var arg in newExpr.Arguments)
-                _root.AddPath($"{_currentPath}.{FieldMaskRoot<TRoot>.GetMemberName(arg)}");
+            {
+                var memberName = FieldMaskRoot<TRoot>.GetMemberName(arg);
+                _root.AddPath(string.IsNullOrEmpty(_currentPath) ? memberName : $"{_currentPath}.{memberName}");
+            }
             return new FieldMaskNode<TRoot, TNext>(_root, _currentPath);
         }
 
         var memberPath = FieldMaskRoot<TRoot>.GetMemberName(selector.Body);
-        return new FieldMaskNode<TRoot, TNext>(_root, $"{_currentPath}.{memberPath}", hasUncommittedPath: true);
+        var path = string.IsNullOrEmpty(_currentPath) ? memberPath : $"{_currentPath}.{memberPath}";
+        return new FieldMaskNode<TRoot, TNext>(_root, path, hasUncommittedPath: true);
     }
 
     public FieldMaskNode<TRoot, TElement> Include<TElement>(
-        Expression<Func<TRoot, IEnumerable<TElement>>> selector)
+        Expression<Func<TRoot, RepeatedField<TElement>>> selector)
     {
         CommitIfNeeded();
         return _root.Include(selector);

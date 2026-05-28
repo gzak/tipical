@@ -73,7 +73,7 @@ export function SearchResults() {
       {!isLoading && !error && sorted.length > 0 && (
         <ul className="space-y-2">
           {sorted.map(business => (
-            <li key={business.id}>
+            <li key={business.googlePlaceId}>
               <button
                 onClick={() => openBusinessPanel(business)}
                 className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"

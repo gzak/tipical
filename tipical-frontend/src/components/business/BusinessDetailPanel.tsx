@@ -66,7 +66,7 @@ export function BusinessDetailPanel() {
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
               Tipping Policy
             </h3>
-            <TippingPolicyDisplay googlePlaceId={displayBusiness.googlePlaceId} />
+            <TippingPolicyDisplay business={displayBusiness} />
           </div>
 
           <hr className="border-gray-200" />
