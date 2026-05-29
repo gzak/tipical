@@ -1,21 +1,14 @@
 import { useCallback, useMemo } from 'react';
-import { Marker, InfoWindow } from '@react-google-maps/api';
+import { AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import type { Business, TippingPolicy as TippingPolicyType } from '../../types';
 import { TippingPolicy } from '../../types';
 import { BusinessInfoWindow } from './BusinessInfoWindow';
 
-function buildIconUrl(color: string): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-    <circle cx="14" cy="14" r="12" fill="${color}" stroke="white" stroke-width="2.5"/>
-  </svg>`;
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-}
-
-const MARKER_ICON_URLS: Record<TippingPolicyType | 'unknown', string> = {
-  [TippingPolicy.NoTips]: buildIconUrl('#22c55e'),
-  [TippingPolicy.TipsExcludeTax]: buildIconUrl('#eab308'),
-  [TippingPolicy.TipsIncludeTax]: buildIconUrl('#ef4444'),
-  unknown: buildIconUrl('#9ca3af'),
+const POLICY_COLORS: Record<TippingPolicyType | 'unknown', string> = {
+  [TippingPolicy.NoTips]: '#22c55e',
+  [TippingPolicy.TipsExcludeTax]: '#eab308',
+  [TippingPolicy.TipsIncludeTax]: '#ef4444',
+  unknown: '#9ca3af',
 };
 
 interface BusinessMarkerProps {
@@ -25,38 +18,29 @@ interface BusinessMarkerProps {
   onInfoWindowClose: () => void;
 }
 
-export function BusinessMarker({
-  business,
-  isActive,
-  onMarkerClick,
-  onInfoWindowClose,
-}: BusinessMarkerProps) {
+export function BusinessMarker({ business, isActive, onMarkerClick, onInfoWindowClose }: BusinessMarkerProps) {
   const position = useMemo(
     () => ({ lat: business.latitude, lng: business.longitude }),
     [business.latitude, business.longitude]
   );
+
+  const color = POLICY_COLORS[business.winningPolicy ?? 'unknown'];
 
   const handleClick = useCallback(
     () => onMarkerClick(business.googlePlaceId),
     [onMarkerClick, business.googlePlaceId]
   );
 
-  const icon = useMemo(
-    () => ({
-      url: MARKER_ICON_URLS[business.winningPolicy ?? 'unknown'],
-      scaledSize: new google.maps.Size(28, 28),
-    }),
-    [business.winningPolicy]
-  );
-
   return (
     <>
-      <Marker
+      <AdvancedMarker
         position={position}
-        icon={icon}
         title={business.name}
         onClick={handleClick}
-      />
+      >
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: color, border: '2.5px solid white', boxShadow: '0 1px 4px rgba(0,0,0,0.3)', cursor: 'pointer' }} />
+      </AdvancedMarker>
+
       {isActive && (
         <InfoWindow position={position} onCloseClick={onInfoWindowClose}>
           <BusinessInfoWindow business={business} onClose={onInfoWindowClose} />
