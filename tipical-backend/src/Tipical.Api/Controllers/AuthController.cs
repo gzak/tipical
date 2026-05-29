@@ -16,6 +16,11 @@ public class AuthController(
     ApplicationDbContext dbContext,
     ILogger<AuthController> logger) : ControllerBase
 {
+    /// <summary>Authenticate using a Google ID token.</summary>
+    /// <remarks>
+    /// Verifies the Google ID token and returns a Tipical JWT.
+    /// Returns 403 when the allowlist is enabled and the account is not on it.
+    /// </remarks>
     [HttpPost("google")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -45,6 +50,7 @@ public class AuthController(
         }
     }
 
+    /// <summary>Return the authenticated user's profile.</summary>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(UserInfoResponse), StatusCodes.Status200OK)]

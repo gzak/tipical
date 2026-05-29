@@ -11,6 +11,8 @@ namespace Tipical.Api.Controllers;
 [Route("api/v1/tipping")]
 public class TippingController(ITippingService tippingService, ILogger<TippingController> logger) : ControllerBase
 {
+    /// <summary>Get the aggregate tipping policy votes for a business.</summary>
+    /// <param name="googlePlaceId">The Google Place ID of the business.</param>
     [HttpGet("votes/{googlePlaceId}")]
     [ProducesResponseType(typeof(TippingVotesAggregateResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<TippingVotesAggregateResponse>> GetVotes(string googlePlaceId)
@@ -19,9 +21,12 @@ public class TippingController(ITippingService tippingService, ILogger<TippingCo
         return Ok(aggregate);
     }
 
+    /// <summary>Get the current user's tipping policy vote for a business.</summary>
+    /// <param name="googlePlaceId">The Google Place ID of the business.</param>
     [HttpGet("votes/{googlePlaceId}/user")]
     [Authorize]
     [ProducesResponseType(typeof(TippingVoteResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TippingVoteResponse>> GetUserVote(string googlePlaceId)
     {
@@ -41,6 +46,9 @@ public class TippingController(ITippingService tippingService, ILogger<TippingCo
         return Ok(vote);
     }
 
+    /// <summary>Submit or update the current user's tipping policy vote for a business.</summary>
+    /// <param name="googlePlaceId">The Google Place ID of the business.</param>
+    /// <param name="request">The tipping policy vote to record.</param>
     [HttpPut("votes/{googlePlaceId}")]
     [Authorize]
     [ProducesResponseType(typeof(TippingVoteResponse), StatusCodes.Status200OK)]

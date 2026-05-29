@@ -1,8 +1,14 @@
 namespace Tipical.Core.Models;
 
+/// <summary>Describes the tipping practice observed at a business.</summary>
 public enum TippingPolicy
 {
-    NoTips = 0,           // Best - no tips requested
-    TipsExcludeTax = 1,   // Middle - tips but calculated before tax
-    TipsIncludeTax = 2    // Worst - tips calculated on post-tax total
+    /// <summary>The business does not request tips.</summary>
+    NoTips = 0,
+
+    /// <summary>Tips are requested and calculated on the pre-tax subtotal.</summary>
+    TipsExcludeTax = 1,
+
+    /// <summary>Tips are requested and calculated on the post-tax total.</summary>
+    TipsIncludeTax = 2
 }
