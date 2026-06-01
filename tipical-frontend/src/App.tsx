@@ -4,7 +4,7 @@ import { useBusinessSearch } from './hooks/useBusinessSearch';
 import { SearchStoreProvider, useSearchStore } from './stores/searchStore';
 import { useShallow } from 'zustand/react/shallow';
 import { GoogleMap } from './components/map';
-import { SearchBar, SearchResults } from './components/search';
+import { SearchBar } from './components/search';
 import { BusinessDetailPanel } from './components/business';
 import { UserProfile, GoogleAuthModal } from './components/auth';
 import { Loading } from './components/common';
@@ -39,7 +39,6 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
         userProfileSlot={<UserProfile />}
       />
 
-      <SearchResults />
       <BusinessDetailPanel />
       <GoogleAuthModal />
     </div>
