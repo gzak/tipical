@@ -19,31 +19,32 @@ interface GoogleMapProps {
 }
 
 // Inner component — uses useMap() which requires being inside <Map>'s React tree
+function MapPanner({ latitude, longitude }: { latitude: number; longitude: number }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map) map.panTo({ lat: latitude, lng: longitude });
+  }, [map, latitude, longitude]);
+  return null;
+}
+
+function UserLocationMarker({ latitude, longitude }: { latitude: number; longitude: number }) {
+  return (
+    <AdvancedMarker position={{ lat: latitude, lng: longitude }} title="Your location" zIndex={1000}>
+      <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#3b82f6', border: '2px solid white', boxShadow: '0 0 0 3px rgba(59,130,246,0.3)' }} />
+    </AdvancedMarker>
+  );
+}
+
 interface MapMarkersProps {
   businesses: Business[];
-  latitude: number | null;
-  longitude: number | null;
   activeMarkerId: string | null;
   onMarkerClick: (id: string) => void;
   onInfoWindowClose: () => void;
 }
 
-function MapMarkers({ businesses, latitude, longitude, activeMarkerId, onMarkerClick, onInfoWindowClose }: MapMarkersProps) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (map && latitude !== null && longitude !== null) {
-      map.panTo({ lat: latitude, lng: longitude });
-    }
-  }, [map, latitude, longitude]);
-
+function MapMarkers({ businesses, activeMarkerId, onMarkerClick, onInfoWindowClose }: MapMarkersProps) {
   return (
     <>
-      {latitude !== null && longitude !== null && (
-        <AdvancedMarker position={{ lat: latitude, lng: longitude }} title="Your location" zIndex={1000}>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#3b82f6', border: '2px solid white', boxShadow: '0 0 0 3px rgba(59,130,246,0.3)' }} />
-        </AdvancedMarker>
-      )}
       {businesses.map(business => (
         <BusinessMarker
           key={business.googlePlaceId}
@@ -99,6 +100,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
   const [center, setCenter] = useState(initialCenter);
   const [zoom, setZoom] = useState(initialZoom);
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+  const [tilesLoaded, setTilesLoaded] = useState(false);
   const { isSupported, latitude, longitude, isLoading: gpsLoading, requestLocation } = useGeolocation();
 
   const handleMapClick = useCallback(() => {
@@ -116,6 +118,11 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
 
   return (
     <div className="relative w-full h-full">
+      {!tilesLoaded && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white" role="status" aria-label="Map loading">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" aria-hidden="true" />
+        </div>
+      )}
       <Map
         mapId={mapId}
         defaultCenter={initialCenter}
@@ -125,6 +132,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
         mapTypeControl={false}
         fullscreenControl={false}
         clickableIcons={false}
+        onTilesLoaded={() => setTilesLoaded(true)}
         onIdle={e => {
           const c = e.map.getCenter();
           const z = e.map.getZoom();
@@ -133,14 +141,20 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
         }}
         onClick={handleMapClick}
       >
-        <MapMarkers
-          businesses={businesses}
-          latitude={latitude}
-          longitude={longitude}
-          activeMarkerId={activeMarkerId}
-          onMarkerClick={handleMarkerClick}
-          onInfoWindowClose={handleInfoWindowClose}
-        />
+        {latitude !== null && longitude !== null && (
+          <>
+            <MapPanner latitude={latitude} longitude={longitude} />
+            <UserLocationMarker latitude={latitude} longitude={longitude} />
+          </>
+        )}
+        {tilesLoaded && (
+          <MapMarkers
+            businesses={businesses}
+            activeMarkerId={activeMarkerId}
+            onMarkerClick={handleMarkerClick}
+            onInfoWindowClose={handleInfoWindowClose}
+          />
+        )}
 
         {searchBarSlot && (
           <MapControl position={ControlPosition.TOP_LEFT}>
