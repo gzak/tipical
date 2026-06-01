@@ -10,13 +10,14 @@ interface UseBusinessSearchOptions {
 }
 
 export function useBusinessSearch({ query, searchCenter }: UseBusinessSearchOptions) {
+  const normalizedQuery = query?.trim() || undefined;
   const radius = radiusFromZoom(searchCenter.zoom);
   const roundedLat = Math.round(searchCenter.latitude * 1e4) / 1e4;
   const roundedLng = Math.round(searchCenter.longitude * 1e4) / 1e4;
 
   return useQuery<Business[]>({
-    queryKey: ['businesses', 'search', { query, latitude: roundedLat, longitude: roundedLng, radius }],
-    queryFn: () => businessService.search(query?.trim() || undefined, searchCenter.latitude, searchCenter.longitude, radius),
+    queryKey: ['businesses', 'search', { query: normalizedQuery, latitude: roundedLat, longitude: roundedLng, radius }],
+    queryFn: () => businessService.search(normalizedQuery, searchCenter.latitude, searchCenter.longitude, radius),
     placeholderData: keepPreviousData,
   });
 }
