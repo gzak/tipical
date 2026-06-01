@@ -30,6 +30,7 @@ services:
       - JwtSettings__Issuer=TipicalApi
       - JwtSettings__Audience=TipicalApp
       - JwtSettings__ExpirationHours=24
+      - ASPNETCORE_ENVIRONMENT=Development
       - Cors__AllowedOrigins__0=http://localhost:5173
     ports:
       - "5050:8080"
