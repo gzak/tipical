@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Map, AdvancedMarker, MapControl, ControlPosition, useMap } from '@vis.gl/react-google-maps';
 import { useUIStore } from '../../stores/uiStore';
+import { useSearchStore } from '../../stores/searchStore';
 import { useGeolocation } from '../../hooks';
 import type { Business } from '../../types';
 import { BusinessMarker } from './BusinessMarker';
@@ -56,6 +57,31 @@ function MapMarkers({ businesses, activeMarkerId, onMarkerClick, onInfoWindowClo
       ))}
     </>
   );
+}
+
+function MapController({ businesses, isSearching }: { businesses: Business[]; isSearching: boolean }) {
+  const map = useMap();
+  const fitBoundsOnResults = useSearchStore(s => s.fitBoundsOnResults);
+  const clearFitBounds = useSearchStore(s => s.clearFitBounds);
+  const wasSearchingRef = useRef(false);
+
+  useEffect(() => {
+    if (isSearching) {
+      wasSearchingRef.current = true;
+      return;
+    }
+    if (!wasSearchingRef.current) return;
+    wasSearchingRef.current = false;
+
+    if (!fitBoundsOnResults || !map || businesses.length === 0) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    businesses.forEach(b => bounds.extend({ lat: b.latitude, lng: b.longitude }));
+    map.fitBounds(bounds, 60);
+    clearFitBounds();
+  }, [map, isSearching, businesses, fitBoundsOnResults, clearFitBounds]);
+
+  return null;
 }
 
 interface MyLocationButtonProps {
@@ -141,6 +167,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
         }}
         onClick={handleMapClick}
       >
+        <MapController businesses={businesses} isSearching={isSearching} />
         {latitude !== null && longitude !== null && (
           <>
             <MapPanner latitude={latitude} longitude={longitude} />
@@ -158,7 +185,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
 
         {searchBarSlot && (
           <MapControl position={ControlPosition.TOP_LEFT}>
-            <div className="m-2.5">{searchBarSlot}</div>
+            <div className="m-2.5" style={{ overflow: 'visible' }}>{searchBarSlot}</div>
           </MapControl>
         )}
 

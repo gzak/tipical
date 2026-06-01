@@ -1,3 +1,5 @@
+export const PLACE_SELECT_ZOOM = 17;
+
 export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6_371_000;
   const φ1 = (lat1 * Math.PI) / 180;

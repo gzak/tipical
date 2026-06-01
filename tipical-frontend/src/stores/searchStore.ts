@@ -12,8 +12,11 @@ export interface SearchCenter {
 interface SearchState {
   query: string;
   searchCenter: SearchCenter;
+  fitBoundsOnResults: boolean;
   setQuery: (query: string) => void;
   setSearchCenter: (center: SearchCenter) => void;
+  selectPlace: (query: string, center: SearchCenter) => void;
+  clearFitBounds: () => void;
 }
 
 type SearchStoreApi = ReturnType<typeof createSearchStore>;
@@ -22,8 +25,12 @@ function createSearchStore(initialCenter: SearchCenter) {
   return createStore<SearchState>((set) => ({
     query: '',
     searchCenter: initialCenter,
-    setQuery: (query) => set({ query }),
-    setSearchCenter: (searchCenter) => set({ searchCenter }),
+    fitBoundsOnResults: false,
+    setQuery: (query) => set({ query, fitBoundsOnResults: true }),
+    setSearchCenter: (searchCenter) => set({ searchCenter, fitBoundsOnResults: false }),
+    selectPlace: (query, center) =>
+      set({ query, searchCenter: center, fitBoundsOnResults: false }),
+    clearFitBounds: () => set({ fitBoundsOnResults: false }),
   }));
 }
 
