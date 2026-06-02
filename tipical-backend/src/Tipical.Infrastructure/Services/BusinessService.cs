@@ -1,4 +1,5 @@
 using Google.Maps.Places.V1;
+using Grpc.Core;
 using Tipical.Core.DTOs;
 using Tipical.Core.Repositories;
 using Tipical.Core.Models;
@@ -11,6 +12,19 @@ public class BusinessService(
     IGooglePlacesService googlePlacesService) : IBusinessService
 {
     private const int MaxResults = 20;
+
+    public async Task<List<BusinessResponse>> PlaceDetailSearchAsync(string placeId, string sessionToken)
+    {
+        Place place;
+        try { place = await googlePlacesService.GetPlaceAsync(placeId, sessionToken); }
+        catch (RpcException) { return []; }
+
+        var businessByPlaceId = await businessRepository.GetByGooglePlaceIdsAsync([placeId]);
+        var response = businessByPlaceId.TryGetValue(placeId, out var business)
+            ? MapDbBusinessToResponse(business, place)
+            : MapPlaceToResponse(place);
+        return [response];
+    }
 
     public Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request) =>
         string.IsNullOrWhiteSpace(request.Query)

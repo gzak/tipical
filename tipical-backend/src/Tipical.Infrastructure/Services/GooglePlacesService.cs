@@ -69,6 +69,13 @@ public class GooglePlacesService : IGooglePlacesService
         }, NearbySearchSettings);
     }
 
+    public async Task<Place> GetPlaceAsync(string placeId, string sessionToken)
+    {
+        return await _client.GetPlaceAsync(
+            new GetPlaceRequest { Name = $"places/{placeId}", SessionToken = sessionToken },
+            GetPlaceSettings);
+    }
+
     public async Task<IReadOnlyList<Place>> BulkFetchAsync(IEnumerable<string> placeIds)
     {
         var tasks = placeIds.Select(async id =>

@@ -9,8 +9,10 @@ interface SearchThisAreaButtonProps {
 
 export function SearchThisAreaButton({ center, zoom, isSearching = false }: SearchThisAreaButtonProps) {
   const setSearchCenter = useSearchStore(s => s.setSearchCenter);
+  const placeId = useSearchStore(s => s.placeId);
   const visible = useSearchAreaChanged(center, zoom);
 
+  if (placeId) return null;
   if (!visible && !isSearching) return null;
 
   return (

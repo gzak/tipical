@@ -13,6 +13,12 @@ export const businessService = {
     return response.data;
   },
 
+  async searchByPlaceId(placeId: string, sessionToken: string): Promise<Business[]> {
+    const params = new URLSearchParams({ placeId, sessionToken });
+    const response = await apiClient.get<Business[]>(`/businesses/search?${params}`);
+    return response.data;
+  },
+
   async getById(id: string): Promise<Business> {
     const response = await apiClient.get<Business>(`/businesses/${id}`);
     return response.data;

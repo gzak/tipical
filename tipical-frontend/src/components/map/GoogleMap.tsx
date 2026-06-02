@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Map, AdvancedMarker, MapControl, ControlPosition, useMap } from '@vis.gl/react-google-maps';
 import { useUIStore } from '../../stores/uiStore';
+import { useSearchStore } from '../../stores/searchStore';
 import { useGeolocation } from '../../hooks';
 import type { Business } from '../../types';
 import { BusinessMarker } from './BusinessMarker';
@@ -16,6 +17,37 @@ interface GoogleMapProps {
   initialZoom: number;
   searchBarSlot?: React.ReactNode;
   userProfileSlot?: React.ReactNode;
+}
+
+function MapController({ businesses }: { businesses: Business[] }) {
+  const map = useMap();
+  const fitBoundsOnResults = useSearchStore(s => s.fitBoundsOnResults);
+  const clearFitBounds = useSearchStore(s => s.clearFitBounds);
+  const syncButtonBase = useSearchStore(s => s.syncButtonBase);
+
+  const fitBoundsRef = useRef(fitBoundsOnResults);
+  fitBoundsRef.current = fitBoundsOnResults;
+
+  useEffect(() => {
+    if (!map || !fitBoundsRef.current || !businesses.length) return;
+    clearFitBounds();
+    const bounds = new google.maps.LatLngBounds();
+    businesses.forEach(b => bounds.extend({ lat: b.latitude, lng: b.longitude }));
+    map.fitBounds(bounds, 80);
+
+    const listener = map.addListener('idle', () => {
+      listener.remove();
+      const c = map.getCenter();
+      const z = map.getZoom();
+      if (c && z !== undefined) {
+        syncButtonBase({ latitude: c.lat(), longitude: c.lng(), zoom: z });
+      }
+    });
+
+    return () => listener.remove();
+  }, [businesses, map, clearFitBounds, syncButtonBase]);
+
+  return null;
 }
 
 // Inner component — uses useMap() which requires being inside <Map>'s React tree
@@ -141,6 +173,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
         }}
         onClick={handleMapClick}
       >
+        <MapController businesses={businesses} />
         {latitude !== null && longitude !== null && (
           <>
             <MapPanner latitude={latitude} longitude={longitude} />
