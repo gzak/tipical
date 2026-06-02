@@ -41,7 +41,6 @@ public class GooglePlacesService : IGooglePlacesService
         {
             TextQuery = query,
             MaxResultCount = maxResultCount,
-            IncludedType = "restaurant",
             LocationBias = new SearchTextRequest.Types.LocationBias
             {
                 Circle = new Circle

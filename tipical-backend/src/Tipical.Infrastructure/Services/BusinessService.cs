@@ -12,7 +12,32 @@ public class BusinessService(
 {
     private const int MaxResults = 20;
 
-    public async Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request)
+    public Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request) =>
+        string.IsNullOrWhiteSpace(request.Query)
+            ? NearbySearchAsync(request)
+            : TextSearchAsync(request);
+
+    private async Task<List<BusinessResponse>> TextSearchAsync(BusinessSearchRequest request)
+    {
+        // Step 1: Places API text search is the authoritative source and ordering
+        var placesResult = await googlePlacesService.SearchAsync(
+            request.Query!, request.Latitude, request.Longitude, request.Radius,
+            maxResultCount: MaxResults);
+        var places = placesResult.Places;
+
+        // Step 2: Correlate with DB to enrich matches with tipping policy data
+        var businessByPlaceId = await businessRepository.GetByGooglePlaceIdsAsync(
+            places.Select(p => p.Id));
+
+        // Step 3: Build responses in Places relevance order
+        return places.Select(p =>
+            businessByPlaceId.TryGetValue(p.Id, out var business)
+                ? MapDbBusinessToResponse(business, p)
+                : MapPlaceToResponse(p))
+            .ToList();
+    }
+
+    private async Task<List<BusinessResponse>> NearbySearchAsync(BusinessSearchRequest request)
     {
         // Step 1: Query DB for known businesses near the requested location, sorted by policy priority
         var dbBusinesses = await businessRepository.SearchNearbyAsync(
@@ -25,21 +50,10 @@ public class BusinessService(
         if (dbBusinesses.Count < MaxResults)
         {
             var remaining = MaxResults - dbBusinesses.Count;
-            IEnumerable<Place> places;
-            if (string.IsNullOrWhiteSpace(request.Query))
-            {
-                var result = await googlePlacesService.SearchNearbyAsync(
-                    request.Latitude, request.Longitude, request.Radius,
-                    maxResultCount: MaxResults);
-                places = result.Places;
-            }
-            else
-            {
-                var result = await googlePlacesService.SearchAsync(
-                    request.Query, request.Latitude, request.Longitude, request.Radius,
-                    maxResultCount: MaxResults);
-                places = result.Places;
-            }
+            var result = await googlePlacesService.SearchNearbyAsync(
+                request.Latitude, request.Longitude, request.Radius,
+                maxResultCount: MaxResults);
+            var places = result.Places;
 
             placesById = places.ToDictionary(p => p.Id);
 
@@ -64,6 +78,7 @@ public class BusinessService(
         // Step 4: Build responses for DB businesses (already sorted by policy from the query).
         //         Enrich with Google Places display data when available.
         var dbResponses = dbBusinesses
+            .Where(b => placesById.ContainsKey(b.GooglePlaceId))
             .Select(b => MapDbBusinessToResponse(b, placesById[b.GooglePlaceId]));
 
         // Step 5: Append placeholder responses for Google Places backfill
