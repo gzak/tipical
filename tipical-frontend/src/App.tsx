@@ -4,7 +4,7 @@ import { useBusinessSearch } from './hooks/useBusinessSearch';
 import { SearchStoreProvider, useSearchStore } from './stores/searchStore';
 import { useShallow } from 'zustand/react/shallow';
 import { GoogleMap } from './components/map';
-import { SearchBar, SearchResults } from './components/search';
+import { SearchBar } from './components/search';
 import { BusinessDetailPanel } from './components/business';
 import { UserProfile, GoogleAuthModal } from './components/auth';
 import { Loading } from './components/common';
@@ -23,8 +23,8 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
     useShallow(s => ({ searchCenter: s.searchCenter, query: s.query }))
   );
 
-  const { data: businesses = [], isPlaceholderData } = useBusinessSearch({
-    query: query.trim() || undefined,
+  const { data: businesses = [], isLoading, isPlaceholderData } = useBusinessSearch({
+    query,
     searchCenter,
   });
 
@@ -32,14 +32,13 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
     <div className="relative w-screen h-screen overflow-hidden">
       <GoogleMap
         businesses={businesses}
-        isSearching={isPlaceholderData}
+        isSearching={isLoading || isPlaceholderData}
         initialCenter={initialCenter}
         initialZoom={initialZoom}
         searchBarSlot={<SearchBar />}
         userProfileSlot={<UserProfile />}
       />
 
-      <SearchResults />
       <BusinessDetailPanel />
       <GoogleAuthModal />
     </div>

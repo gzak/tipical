@@ -12,10 +12,8 @@ export interface SearchCenter {
 interface SearchState {
   query: string;
   searchCenter: SearchCenter;
-  showResults: boolean;
   setQuery: (query: string) => void;
   setSearchCenter: (center: SearchCenter) => void;
-  setShowResults: (show: boolean) => void;
 }
 
 type SearchStoreApi = ReturnType<typeof createSearchStore>;
@@ -24,10 +22,8 @@ function createSearchStore(initialCenter: SearchCenter) {
   return createStore<SearchState>((set) => ({
     query: '',
     searchCenter: initialCenter,
-    showResults: false,
-    setQuery: (query) => set({ query, showResults: Boolean(query.trim()) }),
+    setQuery: (query) => set({ query }),
     setSearchCenter: (searchCenter) => set({ searchCenter }),
-    setShowResults: (show) => set({ showResults: show }),
   }));
 }
 
