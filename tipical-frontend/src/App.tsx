@@ -19,13 +19,15 @@ interface AppLayoutProps {
 }
 
 function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
-  const { searchCenter, query } = useSearchStore(
-    useShallow(s => ({ searchCenter: s.searchCenter, query: s.query }))
+  const { searchCenter, query, placeId, sessionToken } = useSearchStore(
+    useShallow(s => ({ searchCenter: s.searchCenter, query: s.query, placeId: s.placeId, sessionToken: s.sessionToken }))
   );
 
   const { data: businesses = [], isLoading, isPlaceholderData } = useBusinessSearch({
     query,
     searchCenter,
+    placeId,
+    sessionToken,
   });
 
   return (
