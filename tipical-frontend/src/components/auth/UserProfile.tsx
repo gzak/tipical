@@ -1,9 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
+import { useUIStore } from '../../stores/uiStore';
 import { useClickOutside } from '../../hooks/useClickOutside';
+import { Button } from '../common/Button';
 
-export const UserProfile = () => {
-  const { user, isAuthenticated, clearAuth } = useAuthStore();
+const SignInButton = () => {
+  const setShowAuthModal = useUIStore(s => s.setShowAuthModal);
+  return (
+    <Button
+      type="button"
+      variant="primary"
+      size="sm"
+      className="!rounded-full"
+      onClick={() => setShowAuthModal(true)}
+    >
+      Sign in
+    </Button>
+  );
+};
+
+const ProfileDropdown = () => {
+  const { user, clearAuth } = useAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -23,9 +40,7 @@ export const UserProfile = () => {
     }
   }, [isDropdownOpen]);
 
-  if (!isAuthenticated() || !user) {
-    return null;
-  }
+  if (!user) return null;
 
   const handleLogout = () => {
     clearAuth();
@@ -145,4 +160,9 @@ export const UserProfile = () => {
       )}
     </div>
   );
+};
+
+export const UserProfile = () => {
+  const isAuthenticated = useAuthStore(s => !!s.token);
+  return isAuthenticated ? <ProfileDropdown /> : <SignInButton />;
 };
