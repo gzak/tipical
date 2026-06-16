@@ -9,4 +9,5 @@ public interface IGooglePlacesService
     Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double latitude, double longitude, int radius);
     Task<Place> GetPlaceAsync(string placeId, string sessionToken);
     Task<IReadOnlyList<Place>> BulkFetchAsync(IEnumerable<string> placeIds);
+    Task<string?> GetPhotoMediaUriAsync(string photoName, int maxWidthPx = 400);
 }

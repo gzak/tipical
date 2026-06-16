@@ -80,6 +80,14 @@ public sealed class FieldMaskNode<TRoot, TCurrent>
         _hasUncommittedPath = hasUncommittedPath;
     }
 
+    public FieldMaskNode<TRoot, TElement> ThenInclude<TElement>(Expression<Func<TCurrent, RepeatedField<TElement>>> selector)
+    {
+        CommitIfNeeded();
+        var memberPath = FieldMaskRoot<TRoot>.GetMemberName(selector.Body);
+        var path = string.IsNullOrEmpty(_currentPath) ? memberPath : $"{_currentPath}.{memberPath}";
+        return new FieldMaskNode<TRoot, TElement>(_root, path);
+    }
+
     public FieldMaskNode<TRoot, TNext> ThenInclude<TNext>(Expression<Func<TCurrent, TNext>> selector)
     {
         if (selector.Body is NewExpression newExpr)
