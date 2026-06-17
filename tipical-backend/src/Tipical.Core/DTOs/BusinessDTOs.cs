@@ -28,10 +28,10 @@ public class BusinessResponse
     public required string GooglePlaceId { get; set; }
 
     /// <summary>Business display name.</summary>
-    public required string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     /// <summary>Formatted street address.</summary>
-    public required string Address { get; set; }
+    public string Address { get; set; } = null!;
 
     /// <summary>Latitude of the business location.</summary>
     public decimal Latitude { get; set; }
@@ -40,13 +40,22 @@ public class BusinessResponse
     public decimal Longitude { get; set; }
 
     /// <summary>Google Places type tags for this business (e.g. "restaurant", "cafe").</summary>
-    public required List<string> PlaceTypes { get; set; }
+    public List<string> PlaceTypes { get; set; } = [];
 
     /// <summary>Business phone number, if available.</summary>
     public string? Phone { get; set; }
 
     /// <summary>Business website URL, if available.</summary>
     public string? Website { get; set; }
+
+    /// <summary>Google Places rating (1.0–5.0), if available.</summary>
+    public double? Rating { get; set; }
+
+    /// <summary>Total number of Google user ratings, if available.</summary>
+    public int? ReviewCount { get; set; }
+
+    /// <summary>Photo media URLs (up to 5), resolved server-side from Google Places.</summary>
+    public List<string> Photos { get; set; } = [];
 
     /// <summary>The tipping policy with the most votes, if any votes have been cast.</summary>
     public TippingPolicy? WinningPolicy { get; set; }

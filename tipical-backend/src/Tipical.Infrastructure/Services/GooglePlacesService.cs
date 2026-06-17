@@ -10,19 +10,27 @@ public class GooglePlacesService : IGooglePlacesService
 {
     private static readonly CallSettings GetPlaceSettings =
         FieldMask.For<Place>()
-            .Include(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location })
+            .Include(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location, p.Rating, p.UserRatingCount })
+            .Include(p => p.Photos)
+            .ThenInclude(photo => photo.Name)
             .ToCallSettings();
 
     private static readonly CallSettings NearbySearchSettings =
         FieldMask.For<SearchNearbyResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location })
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location, p.Rating, p.UserRatingCount })
+            .Include(r => r.Places)
+            .ThenInclude(p => p.Photos)
+            .ThenInclude(photo => photo.Name)
             .ToCallSettings();
 
     private static readonly CallSettings TextSearchSettings =
         FieldMask.For<SearchTextResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location })
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location, p.Rating, p.UserRatingCount })
+            .Include(r => r.Places)
+            .ThenInclude(p => p.Photos)
+            .ThenInclude(photo => photo.Name)
             .ToCallSettings();
 
     private readonly PlacesClient _client;
@@ -84,6 +92,21 @@ public class GooglePlacesService : IGooglePlacesService
             catch { return null; }
         });
         return (await Task.WhenAll(tasks)).Where(p => p != null).Select(p => p!).ToList();
+    }
+
+    public async Task<string?> GetPhotoMediaUriAsync(string photoName, int maxWidthPx = 400)
+    {
+        try
+        {
+            var media = await _client.GetPhotoMediaAsync(new GetPhotoMediaRequest
+            {
+                Name = $"{photoName}/media",
+                MaxWidthPx = maxWidthPx,
+                SkipHttpRedirect = true
+            });
+            return string.IsNullOrWhiteSpace(media.PhotoUri) ? null : media.PhotoUri;
+        }
+        catch { return null; }
     }
 
     public async Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double latitude, double longitude, int radius)

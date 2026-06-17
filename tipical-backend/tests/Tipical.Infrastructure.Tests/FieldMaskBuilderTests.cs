@@ -21,6 +21,7 @@ public class FieldMaskBuilderTests
         public string Name { get; set; } = "";
         public string Types_ { get; set; } = "";
         public TestSub Sub { get; set; } = new();
+        public RepeatedField<TestSub> SubItems { get; set; } = [];
     }
 
     private sealed class TestSub
@@ -169,6 +170,18 @@ public class FieldMaskBuilderTests
             .Build();
 
         await Assert.That(mask).IsEqualTo("id,name,types");
+    }
+
+    [Test]
+    public async Task NestedRepeatedField_NavigatesThroughElementType()
+    {
+        var mask = FieldMask.For<TestResponse>()
+            .Include(r => r.Items)
+            .ThenInclude(i => i.SubItems)
+            .ThenInclude(s => new { s.Text, s.LanguageCode })
+            .Build();
+
+        await Assert.That(mask).IsEqualTo("items.subItems.text,items.subItems.languageCode");
     }
 
     [Test]
