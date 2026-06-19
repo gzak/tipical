@@ -1,4 +1,5 @@
 import { useUIStore } from '../../stores/uiStore';
+import { useBusinessDetail } from '../../hooks';
 import type { Business, TippingPolicy as TippingPolicyType } from '../../types';
 import { TippingPolicy } from '../../types';
 
@@ -21,6 +22,7 @@ interface BusinessInfoWindowProps {
 
 export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProps) {
   const openBusinessPanel = useUIStore(s => s.openBusinessPanel);
+  const { data: detail, isLoading: detailLoading } = useBusinessDetail(business.googlePlaceId);
 
   const handleViewDetails = () => {
     onClose();
@@ -43,6 +45,16 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
           No data yet
         </span>
       )}
+      {detailLoading ? (
+        <div className="animate-pulse h-3 bg-gray-100 rounded w-16 mb-2" />
+      ) : detail?.rating != null ? (
+        <p className="text-xs text-gray-500 mb-2">
+          ★ {detail.rating.toFixed(1)}
+          {detail.reviewCount != null && (
+            <span className="ml-1">({detail.reviewCount.toLocaleString()})</span>
+          )}
+        </p>
+      ) : null}
       <button
         aria-label={`View details for ${business.name}`}
         onClick={handleViewDetails}

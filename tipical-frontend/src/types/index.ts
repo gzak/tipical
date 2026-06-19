@@ -10,14 +10,21 @@ export interface Business {
   id: string;
   googlePlaceId: string;
   name: string;
-  address: string;
+  address?: string;
   latitude: number;
   longitude: number;
   placeTypes?: string[];
-  phone?: string;
-  website?: string;
   winningPolicy?: TippingPolicy;
   winningPolicyVoteCount?: number;
+}
+
+export interface BusinessDetail {
+  address: string;
+  phone?: string;
+  website?: string;
+  rating?: number;
+  reviewCount?: number;
+  photos: string[];
 }
 
 export interface TippingVote {

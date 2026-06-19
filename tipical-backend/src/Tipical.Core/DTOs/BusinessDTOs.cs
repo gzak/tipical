@@ -18,8 +18,8 @@ public class BusinessSearchRequest
     public required int Radius { get; set; }
 }
 
-/// <summary>Business details with crowd-sourced tipping policy summary.</summary>
-public class BusinessResponse
+/// <summary>Lean business data needed to render a map pin.</summary>
+public class BusinessPinResponse
 {
     /// <summary>Internal Tipical business ID.</summary>
     public Guid Id { get; set; }
@@ -42,6 +42,19 @@ public class BusinessResponse
     /// <summary>Google Places type tags for this business (e.g. "restaurant", "cafe").</summary>
     public List<string> PlaceTypes { get; set; } = [];
 
+    /// <summary>The tipping policy with the most votes, if any votes have been cast.</summary>
+    public TippingPolicy? WinningPolicy { get; set; }
+
+    /// <summary>Number of votes for the winning policy.</summary>
+    public int? WinningPolicyVoteCount { get; set; }
+}
+
+/// <summary>Rich business detail fetched lazily when a pin is opened.</summary>
+public class BusinessDetailResponse
+{
+    /// <summary>Formatted street address.</summary>
+    public string Address { get; set; } = null!;
+
     /// <summary>Business phone number, if available.</summary>
     public string? Phone { get; set; }
 
@@ -56,10 +69,4 @@ public class BusinessResponse
 
     /// <summary>Photo media URLs (up to 5), resolved server-side from Google Places.</summary>
     public List<string> Photos { get; set; } = [];
-
-    /// <summary>The tipping policy with the most votes, if any votes have been cast.</summary>
-    public TippingPolicy? WinningPolicy { get; set; }
-
-    /// <summary>Number of votes for the winning policy.</summary>
-    public int? WinningPolicyVoteCount { get; set; }
 }

@@ -10,26 +10,25 @@ public class GooglePlacesService : IGooglePlacesService
 {
     private static readonly CallSettings GetPlaceSettings =
         FieldMask.For<Place>()
-            .Include(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location, p.Rating, p.UserRatingCount })
-            .Include(p => p.Photos)
-            .ThenInclude(photo => photo.Name)
+            .Include(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Location, p.Types_ })
             .ToCallSettings();
 
     private static readonly CallSettings NearbySearchSettings =
         FieldMask.For<SearchNearbyResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location, p.Rating, p.UserRatingCount })
-            .Include(r => r.Places)
-            .ThenInclude(p => p.Photos)
-            .ThenInclude(photo => photo.Name)
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Location, p.Types_ })
             .ToCallSettings();
 
     private static readonly CallSettings TextSearchSettings =
         FieldMask.For<SearchTextResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Types_, p.InternationalPhoneNumber, p.WebsiteUri, p.Location, p.Rating, p.UserRatingCount })
-            .Include(r => r.Places)
-            .ThenInclude(p => p.Photos)
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.FormattedAddress, p.Location, p.Types_ })
+            .ToCallSettings();
+
+    private static readonly CallSettings DetailPlaceSettings =
+        FieldMask.For<Place>()
+            .Include(p => new { p.FormattedAddress, p.InternationalPhoneNumber, p.WebsiteUri, p.Rating, p.UserRatingCount })
+            .Include(p => p.Photos)
             .ThenInclude(photo => photo.Name)
             .ToCallSettings();
 
@@ -82,6 +81,13 @@ public class GooglePlacesService : IGooglePlacesService
         return await _client.GetPlaceAsync(
             new GetPlaceRequest { Name = $"places/{placeId}", SessionToken = sessionToken },
             GetPlaceSettings);
+    }
+
+    public async Task<Place> GetPlaceDetailsAsync(string placeId)
+    {
+        return await _client.GetPlaceAsync(
+            new GetPlaceRequest { Name = $"places/{placeId}" },
+            DetailPlaceSettings);
     }
 
     public async Task<IReadOnlyList<Place>> BulkFetchAsync(IEnumerable<string> placeIds)

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { APIProvider, useApiLoadingStatus } from '@vis.gl/react-google-maps';
 import { useInitialLocation } from './hooks/useInitialLocation';
 import { useBusinessSearch } from './hooks/useBusinessSearch';
@@ -8,6 +9,8 @@ import { SearchBar } from './components/search';
 import { BusinessDetailPanel } from './components/business';
 import { UserProfile, GoogleAuthModal } from './components/auth';
 import { Loading } from './components/common';
+import { useUIStore } from './stores/uiStore';
+import type { Business } from './types';
 
 function accuracyToZoom(accuracy: number): number {
   return Math.max(10, Math.min(17, Math.round(16 - Math.log2(accuracy / 50))));
@@ -16,6 +19,17 @@ function accuracyToZoom(accuracy: number): number {
 interface AppLayoutProps {
   initialCenter: { lat: number; lng: number };
   initialZoom: number;
+}
+
+function BusinessDetailPanelWrapper() {
+  const selectedBusiness = useUIStore(s => s.selectedBusiness);
+  const [displayBusiness, setDisplayBusiness] = useState<Business | null>(selectedBusiness);
+  useEffect(() => {
+    if (selectedBusiness) setDisplayBusiness(selectedBusiness);
+  }, [selectedBusiness]);
+
+  if (!displayBusiness) return null;
+  return <BusinessDetailPanel business={displayBusiness} />;
 }
 
 function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
@@ -41,7 +55,7 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
         userProfileSlot={<UserProfile />}
       />
 
-      <BusinessDetailPanel />
+      <BusinessDetailPanelWrapper />
       <GoogleAuthModal />
     </div>
   );
