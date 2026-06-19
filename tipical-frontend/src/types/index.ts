@@ -10,7 +10,6 @@ export interface Business {
   id: string;
   googlePlaceId: string;
   name: string;
-  address?: string;
   latitude: number;
   longitude: number;
   placeTypes?: string[];
@@ -19,7 +18,7 @@ export interface Business {
 }
 
 export interface BusinessDetail {
-  address: string;
+  address?: string;
   phone?: string;
   website?: string;
   rating?: number;
