@@ -4,6 +4,7 @@ namespace Tipical.Core.Services;
 
 public interface IBusinessService
 {
-    Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request);
-    Task<List<BusinessResponse>> PlaceDetailSearchAsync(string placeId, string sessionToken);
+    Task<List<BusinessPinResponse>> SearchBusinessesAsync(BusinessSearchRequest request);
+    Task<List<BusinessPinResponse>> PlaceDetailSearchAsync(string placeId, string sessionToken);
+    Task<BusinessDetailResponse?> GetBusinessDetailAsync(string googlePlaceId);
 }

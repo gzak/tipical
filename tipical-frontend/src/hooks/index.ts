@@ -5,3 +5,4 @@ export { useDebounce } from './useDebounce';
 export { useBusinessSearch, useBusinessById } from './useBusinessSearch';
 export { useTippingData } from './useTippingData';
 export { useSearchAreaChanged } from './useSearchAreaChanged';
+export { useBusinessDetail } from './useBusinessDetail';

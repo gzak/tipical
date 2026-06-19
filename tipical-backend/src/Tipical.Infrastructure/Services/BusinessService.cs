@@ -14,26 +14,43 @@ public class BusinessService(
     private const int MaxResults = 20;
     private const int MaxPhotos = 5;
 
-    public async Task<List<BusinessResponse>> PlaceDetailSearchAsync(string placeId, string sessionToken)
+    public async Task<List<BusinessPinResponse>> PlaceDetailSearchAsync(string placeId, string sessionToken)
     {
         Place place;
         try { place = await googlePlacesService.GetPlaceAsync(placeId, sessionToken); }
         catch (RpcException) { return []; }
 
         var businessByPlaceId = await businessRepository.GetByGooglePlaceIdsAsync([placeId]);
-        var photos = await FetchPhotoUrisAsync(place);
         var response = businessByPlaceId.TryGetValue(placeId, out var business)
-            ? MapDbBusinessToResponse(business, place, photos)
-            : MapPlaceToResponse(place, photos);
+            ? MapDbBusinessToResponse(business, place)
+            : MapPlaceToResponse(place);
         return [response];
     }
 
-    public Task<List<BusinessResponse>> SearchBusinessesAsync(BusinessSearchRequest request) =>
+    public Task<List<BusinessPinResponse>> SearchBusinessesAsync(BusinessSearchRequest request) =>
         string.IsNullOrWhiteSpace(request.Query)
             ? NearbySearchAsync(request)
             : TextSearchAsync(request);
 
-    private async Task<List<BusinessResponse>> TextSearchAsync(BusinessSearchRequest request)
+    public async Task<BusinessDetailResponse?> GetBusinessDetailAsync(string googlePlaceId)
+    {
+        Place place;
+        try { place = await googlePlacesService.GetPlaceDetailsAsync(googlePlaceId); }
+        catch { return null; }
+
+        var photos = await FetchPhotoUrisAsync(place);
+        return new BusinessDetailResponse
+        {
+            Address = place.FormattedAddress,
+            Phone = !string.IsNullOrWhiteSpace(place.InternationalPhoneNumber) ? place.InternationalPhoneNumber : null,
+            Website = !string.IsNullOrWhiteSpace(place.WebsiteUri) ? place.WebsiteUri : null,
+            Rating = place.HasUserRatingCount && place.UserRatingCount > 0 ? place.Rating : null,
+            ReviewCount = place.HasUserRatingCount ? place.UserRatingCount : null,
+            Photos = photos,
+        };
+    }
+
+    private async Task<List<BusinessPinResponse>> TextSearchAsync(BusinessSearchRequest request)
     {
         // Step 1: Places API text search is the authoritative source and ordering
         var placesResult = await googlePlacesService.SearchAsync(
@@ -46,16 +63,13 @@ public class BusinessService(
             places.Select(p => p.Id));
 
         // Step 3: Build responses in Places relevance order
-        return [.. await Task.WhenAll(places.Select(async p =>
-        {
-            var photos = await FetchPhotoUrisAsync(p);
-            return businessByPlaceId.TryGetValue(p.Id, out var business)
-                ? MapDbBusinessToResponse(business, p, photos)
-                : MapPlaceToResponse(p, photos);
-        }))];
+        return [.. places.Select(p =>
+            businessByPlaceId.TryGetValue(p.Id, out var business)
+                ? MapDbBusinessToResponse(business, p)
+                : MapPlaceToResponse(p))];
     }
 
-    private async Task<List<BusinessResponse>> NearbySearchAsync(BusinessSearchRequest request)
+    private async Task<List<BusinessPinResponse>> NearbySearchAsync(BusinessSearchRequest request)
     {
         // Step 1: Query DB for known businesses near the requested location, sorted by policy priority
         var dbBusinesses = await businessRepository.SearchNearbyAsync(
@@ -95,19 +109,14 @@ public class BusinessService(
 
         // Step 4: Build responses for DB businesses (already sorted by policy from the query).
         //         Enrich with Google Places display data when available.
-        var dbResponsesTask = Task.WhenAll(dbBusinesses
+        var dbResponses = dbBusinesses
             .Where(b => placesById.ContainsKey(b.GooglePlaceId))
-            .Select(async b =>
-            {
-                var place = placesById[b.GooglePlaceId];
-                return MapDbBusinessToResponse(b, place, await FetchPhotoUrisAsync(place));
-            }));
+            .Select(b => MapDbBusinessToResponse(b, placesById[b.GooglePlaceId]));
 
-        // Step 5: Append placeholder responses for Google Places backfill — runs in parallel with step 4
-        var backfillResponsesTask = Task.WhenAll(backfillPlaces
-            .Select(async p => MapPlaceToResponse(p, await FetchPhotoUrisAsync(p))));
+        // Step 5: Append placeholder responses for Google Places backfill
+        var backfillResponses = backfillPlaces.Select(MapPlaceToResponse);
 
-        return [.. await dbResponsesTask, .. await backfillResponsesTask];
+        return [.. dbResponses, .. backfillResponses];
     }
 
     private async Task<List<string>> FetchPhotoUrisAsync(Place place)
@@ -117,22 +126,17 @@ public class BusinessService(
         return [.. uris.OfType<string>()];
     }
 
-    private static BusinessResponse ApplyPlaceFields(BusinessResponse response, Place place, List<string> photos)
+    private static BusinessPinResponse ApplyPlaceFields(BusinessPinResponse response, Place place)
     {
         response.Name = place.DisplayName.Text;
         response.Address = place.FormattedAddress;
         response.Latitude = (decimal)place.Location.Latitude;
         response.Longitude = (decimal)place.Location.Longitude;
         response.PlaceTypes = [.. place.Types_];
-        response.Phone = !string.IsNullOrWhiteSpace(place.InternationalPhoneNumber) ? place.InternationalPhoneNumber : null;
-        response.Website = !string.IsNullOrWhiteSpace(place.WebsiteUri) ? place.WebsiteUri : null;
-        response.Rating = place.HasUserRatingCount && place.UserRatingCount > 0 ? place.Rating : null;
-        response.ReviewCount = place.HasUserRatingCount ? place.UserRatingCount : null;
-        response.Photos = photos;
         return response;
     }
 
-    private static BusinessResponse MapDbBusinessToResponse(Business business, Place place, List<string> photos)
+    private static BusinessPinResponse MapDbBusinessToResponse(Business business, Place place)
     {
         // TippingVotes is always non-empty: Business rows are only created inside the
         // SubmitVoteAsync transaction, which atomically upserts a vote in the same commit.
@@ -142,15 +146,15 @@ public class BusinessService(
             .OrderByDescending(x => x.Count)
             .First();
 
-        return ApplyPlaceFields(new BusinessResponse
+        return ApplyPlaceFields(new BusinessPinResponse
         {
             Id = business.Id,
             GooglePlaceId = business.GooglePlaceId,
             WinningPolicy = winner.Policy,
             WinningPolicyVoteCount = winner.Count
-        }, place, photos);
+        }, place);
     }
 
-    private static BusinessResponse MapPlaceToResponse(Place place, List<string> photos) =>
-        ApplyPlaceFields(new BusinessResponse { GooglePlaceId = place.Id }, place, photos);
+    private static BusinessPinResponse MapPlaceToResponse(Place place) =>
+        ApplyPlaceFields(new BusinessPinResponse { GooglePlaceId = place.Id }, place);
 }

@@ -8,6 +8,7 @@ public interface IGooglePlacesService
     Task<SearchNearbyResponse> SearchNearbyAsync(double latitude, double longitude, int radius, int maxResultCount = 20);
     Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double latitude, double longitude, int radius);
     Task<Place> GetPlaceAsync(string placeId, string sessionToken);
+    Task<Place> GetPlaceDetailsAsync(string placeId);
     Task<IReadOnlyList<Place>> BulkFetchAsync(IEnumerable<string> placeIds);
     Task<string?> GetPhotoMediaUriAsync(string photoName, int maxWidthPx = 400);
 }

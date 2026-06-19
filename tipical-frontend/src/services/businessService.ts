@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { Business } from '../types';
+import type { Business, BusinessDetail } from '../types';
 
 export const businessService = {
   async search(query: string | undefined, latitude: number, longitude: number, radius: number): Promise<Business[]> {
@@ -21,6 +21,11 @@ export const businessService = {
 
   async getById(id: string): Promise<Business> {
     const response = await apiClient.get<Business>(`/businesses/${id}`);
+    return response.data;
+  },
+
+  async getDetails(googlePlaceId: string): Promise<BusinessDetail> {
+    const response = await apiClient.get<BusinessDetail>(`/businesses/${googlePlaceId}/details`);
     return response.data;
   },
 };

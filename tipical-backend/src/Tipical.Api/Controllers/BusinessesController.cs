@@ -16,8 +16,8 @@ public class BusinessesController(IBusinessService businessService, ILogger<Busi
     /// <param name="longitude">Center longitude of the search area (used when placeId is absent).</param>
     /// <param name="radius">Search radius in meters (used when placeId is absent).</param>
     [HttpGet("search")]
-    [ProducesResponseType(typeof(List<BusinessResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<BusinessResponse>>> Search(
+    [ProducesResponseType(typeof(List<BusinessPinResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<BusinessPinResponse>>> Search(
         [FromQuery] string? placeId,
         [FromQuery] string? sessionToken,
         [FromQuery] string? query,
@@ -43,5 +43,18 @@ public class BusinessesController(IBusinessService businessService, ILogger<Busi
 
         var results = await businessService.SearchBusinessesAsync(request);
         return Ok(results);
+    }
+
+    /// <summary>Fetch rich detail for a single business by Google Place ID.</summary>
+    /// <param name="googlePlaceId">Google Place ID of the business.</param>
+    [HttpGet("{googlePlaceId}/details")]
+    [ProducesResponseType(typeof(BusinessDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<BusinessDetailResponse>> GetDetails(string googlePlaceId)
+    {
+        if (string.IsNullOrWhiteSpace(googlePlaceId))
+            return BadRequest("googlePlaceId is required.");
+        var result = await businessService.GetBusinessDetailAsync(googlePlaceId);
+        return result is null ? NotFound() : Ok(result);
     }
 }
