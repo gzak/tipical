@@ -9,13 +9,6 @@ namespace Tipical.Infrastructure.Repositories;
 
 public class BusinessRepository(ApplicationDbContext context) : IBusinessRepository
 {
-    public async Task<Business?> GetByIdAsync(Guid id)
-    {
-        return await context.Businesses
-            .Include(b => b.TippingVotes)
-            .SingleOrDefaultAsync(b => b.Id == id);
-    }
-
     public async Task<Business?> GetByGooglePlaceIdAsync(string googlePlaceId)
     {
         return await context.Businesses

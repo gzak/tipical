@@ -25,19 +25,3 @@ public class AuthResponse
     /// <summary>URL of the authenticated user's profile picture, if available.</summary>
     public string? Picture { get; set; }
 }
-
-/// <summary>Profile information for the currently authenticated user.</summary>
-public class UserInfoResponse
-{
-    /// <summary>Unique identifier for the user.</summary>
-    public string UserId { get; set; } = string.Empty;
-
-    /// <summary>User's email address.</summary>
-    public string Email { get; set; } = string.Empty;
-
-    /// <summary>User's display name.</summary>
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>URL of the user's profile picture, if available.</summary>
-    public string? Picture { get; set; }
-}

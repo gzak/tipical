@@ -70,14 +70,4 @@ public class GoogleAuthService(IConfiguration configuration) : IGoogleAuthServic
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public UserInfoResponse GetUserInfoFromClaims(ClaimsPrincipal user)
-    {
-        return new UserInfoResponse
-        {
-            UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "",
-            Email = user.FindFirst(ClaimTypes.Email)?.Value ?? user.FindFirst(JwtRegisteredClaimNames.Email)?.Value ?? "",
-            Name = user.FindFirst(ClaimTypes.Name)?.Value ?? user.FindFirst(JwtRegisteredClaimNames.Name)?.Value ?? "",
-            Picture = user.FindFirst("picture")?.Value
-        };
-    }
 }
