@@ -13,41 +13,41 @@ public class TippingService(
     IBusinessRepository businessRepository,
     ApplicationDbContext context) : ITippingService
 {
-    public async Task<TippingVoteResponse> SubmitVoteAsync(string googlePlaceId, string userId, TippingPolicy policy, string name, double latitude, double longitude)
+    public async Task<TippingVoteResponse> SubmitReportAsync(string googlePlaceId, string userId, TippingPolicy policy, string name, double latitude, double longitude)
     {
         var location = new Point(longitude, latitude) { SRID = GeoConstants.Wgs84Srid };
 
         await using var tx = await context.Database.BeginTransactionAsync();
         var business = await businessRepository.GetOrCreateAsync(googlePlaceId, name, location);
-        var vote = await tippingVoteRepository.UpsertAsync(business.Id, userId, policy);
+        var report = await tippingVoteRepository.UpsertAsync(business.Id, userId, policy);
         await tx.CommitAsync();
 
         return new TippingVoteResponse
         {
-            Id = vote.Id,
+            Id = report.Id,
             GooglePlaceId = googlePlaceId,
-            TippingPolicy = vote.TippingPolicy,
-            CreatedAt = vote.CreatedAt,
-            UpdatedAt = vote.UpdatedAt
+            TippingPolicy = report.TippingPolicy,
+            CreatedAt = report.CreatedAt,
+            UpdatedAt = report.UpdatedAt
         };
     }
 
-    public async Task<TippingVotesAggregateResponse> GetVotesAggregateAsync(string googlePlaceId)
+    public async Task<TippingVotesAggregateResponse> GetReportsAggregateAsync(string googlePlaceId)
     {
         var business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
 
-        var voteCounts = business?.TippingVotes
+        var reportCounts = business?.TippingVotes
             .GroupBy(v => v.TippingPolicy)
             .ToDictionary(g => g.Key, g => g.Count())
             ?? new Dictionary<TippingPolicy, int>();
 
         TippingPolicy? winningPolicy = null;
         int? winningPolicyVoteCount = null;
-        var totalVotes = voteCounts.Sum(kvp => kvp.Value);
+        var totalReports = reportCounts.Sum(kvp => kvp.Value);
 
-        if (voteCounts.Count != 0)
+        if (reportCounts.Count != 0)
         {
-            var winner = voteCounts.OrderByDescending(kvp => kvp.Value).First();
+            var winner = reportCounts.OrderByDescending(kvp => kvp.Value).First();
             winningPolicy = winner.Key;
             winningPolicyVoteCount = winner.Value;
         }
@@ -57,26 +57,26 @@ public class TippingService(
             GooglePlaceId = googlePlaceId,
             WinningPolicy = winningPolicy,
             WinningPolicyVoteCount = winningPolicyVoteCount,
-            VotesByPolicy = voteCounts,
-            TotalVotes = totalVotes
+            VotesByPolicy = reportCounts,
+            TotalVotes = totalReports
         };
     }
 
-    public async Task<TippingVoteResponse?> GetUserVoteAsync(string googlePlaceId, string userId)
+    public async Task<TippingVoteResponse?> GetUserReportAsync(string googlePlaceId, string userId)
     {
         var business = await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId);
         if (business == null) return null;
 
-        var vote = business.TippingVotes.FirstOrDefault(v => v.UserId == userId);
-        if (vote == null) return null;
+        var report = business.TippingVotes.FirstOrDefault(v => v.UserId == userId);
+        if (report == null) return null;
 
         return new TippingVoteResponse
         {
-            Id = vote.Id,
+            Id = report.Id,
             GooglePlaceId = googlePlaceId,
-            TippingPolicy = vote.TippingPolicy,
-            CreatedAt = vote.CreatedAt,
-            UpdatedAt = vote.UpdatedAt
+            TippingPolicy = report.TippingPolicy,
+            CreatedAt = report.CreatedAt,
+            UpdatedAt = report.UpdatedAt
         };
     }
 }

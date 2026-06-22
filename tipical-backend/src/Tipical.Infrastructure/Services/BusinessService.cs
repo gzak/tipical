@@ -58,7 +58,7 @@ public class BusinessService(
             maxResultCount: MaxResults);
         var places = placesResult.Places;
 
-        // Step 2: Correlate with DB to enrich matches with tipping policy data
+        // Step 2: Correlate with DB to enrich matches with tip suggestion data
         var businessByPlaceId = await businessRepository.GetByGooglePlaceIdsAsync(
             places.Select(p => p.Id));
 
@@ -138,7 +138,7 @@ public class BusinessService(
     private static BusinessPinResponse MapDbBusinessToResponse(Business business, Place place)
     {
         // TippingVotes is always non-empty: Business rows are only created inside the
-        // SubmitVoteAsync transaction, which atomically upserts a vote in the same commit.
+        // SubmitReportAsync transaction, which atomically upserts a report in the same commit.
         var winner = business.TippingVotes
             .GroupBy(v => v.TippingPolicy)
             .Select(g => (Policy: g.Key, Count: g.Count()))

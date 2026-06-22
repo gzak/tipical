@@ -36,10 +36,10 @@ public class BusinessPinResponse
     /// <summary>Google Places type tags for this business (e.g. "restaurant", "cafe").</summary>
     public List<string> PlaceTypes { get; set; } = [];
 
-    /// <summary>The tipping policy with the most votes, if any votes have been cast.</summary>
+    /// <summary>The tip suggestion with the most reports, if any.</summary>
     public TippingPolicy? WinningPolicy { get; set; }
 
-    /// <summary>Number of votes for the winning policy.</summary>
+    /// <summary>Number of reports for the winning suggestion.</summary>
     public int? WinningPolicyVoteCount { get; set; }
 }
 

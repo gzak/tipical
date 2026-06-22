@@ -1,10 +1,10 @@
-export const TippingPolicy = {
+export const TipSuggestion = {
   NoTips: 0,
   TipsExcludeTax: 1,
   TipsIncludeTax: 2,
 } as const;
 
-export type TippingPolicy = typeof TippingPolicy[keyof typeof TippingPolicy];
+export type TipSuggestion = typeof TipSuggestion[keyof typeof TipSuggestion];
 
 export interface Business {
   googlePlaceId: string;
@@ -12,7 +12,7 @@ export interface Business {
   latitude: number;
   longitude: number;
   placeTypes?: string[];
-  winningPolicy?: TippingPolicy;
+  winningPolicy?: TipSuggestion;
   winningPolicyVoteCount?: number;
 }
 
@@ -25,19 +25,19 @@ export interface BusinessDetail {
   photos: string[];
 }
 
-export interface TippingVote {
+export interface TipReport {
   id: string;
   googlePlaceId: string;
-  tippingPolicy: TippingPolicy;
+  tippingPolicy: TipSuggestion;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface TippingVotesAggregate {
+export interface TipReportsAggregate {
   googlePlaceId: string;
-  winningPolicy?: TippingPolicy;
+  winningPolicy?: TipSuggestion;
   winningPolicyVoteCount?: number;
-  votesByPolicy: Record<TippingPolicy, number>;
+  votesByPolicy: Record<TipSuggestion, number>;
   totalVotes: number;
 }
 
@@ -60,8 +60,8 @@ export interface GoogleAuthRequest {
   idToken: string;
 }
 
-export interface TippingVoteRequest {
-  tippingPolicy: TippingPolicy;
+export interface TipReportRequest {
+  tippingPolicy: TipSuggestion;
   name: string;
   latitude: number;
   longitude: number;

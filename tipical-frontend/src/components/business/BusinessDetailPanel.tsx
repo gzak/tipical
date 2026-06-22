@@ -1,7 +1,7 @@
 import { useShallow } from 'zustand/react/shallow';
 import { Sidebar } from '../common/Sidebar';
-import { TippingPolicyDisplay } from '../tipping/TippingPolicyDisplay';
-import { TippingPolicySelector } from '../tipping/TippingPolicySelector';
+import { TipSuggestionDisplay } from '../tipping/TipSuggestionDisplay';
+import { TipSuggestionSelector } from '../tipping/TipSuggestionSelector';
 import { useUIStore } from '../../stores/uiStore';
 import { useBusinessDetail } from '../../hooks';
 import type { Business } from '../../types';
@@ -71,22 +71,22 @@ export function BusinessDetailPanel({ business }: BusinessDetailPanelProps) {
 
         <hr className="border-gray-200" />
 
-        {/* Tipping policy display */}
+        {/* Tip suggestion display */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            Tipping Policy
+            Tip Suggestion
           </h3>
-          <TippingPolicyDisplay business={business} />
+          <TipSuggestionDisplay business={business} />
         </div>
 
         <hr className="border-gray-200" />
 
-        {/* Vote */}
+        {/* Submit report */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            Cast Your Vote
+            Submit Your Report
           </h3>
-          <TippingPolicySelector business={business} />
+          <TipSuggestionSelector business={business} />
         </div>
       </div>
     </Sidebar>

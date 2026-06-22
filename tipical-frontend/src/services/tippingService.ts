@@ -1,15 +1,15 @@
 import { apiClient } from './api';
-import type { TippingVote, TippingVotesAggregate, TippingVoteRequest } from '../types';
+import type { TipReport, TipReportsAggregate, TipReportRequest } from '../types';
 
 export const tippingService = {
-  async getVotes(googlePlaceId: string): Promise<TippingVotesAggregate> {
-    const response = await apiClient.get<TippingVotesAggregate>(`/tipping/votes/${googlePlaceId}`);
+  async getReports(googlePlaceId: string): Promise<TipReportsAggregate> {
+    const response = await apiClient.get<TipReportsAggregate>(`/tipping/votes/${googlePlaceId}`);
     return response.data;
   },
 
-  async getUserVote(googlePlaceId: string): Promise<TippingVote | null> {
+  async getUserReport(googlePlaceId: string): Promise<TipReport | null> {
     try {
-      const response = await apiClient.get<TippingVote>(`/tipping/votes/${googlePlaceId}/user`);
+      const response = await apiClient.get<TipReport>(`/tipping/votes/${googlePlaceId}/user`);
       return response.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -19,8 +19,8 @@ export const tippingService = {
     }
   },
 
-  async submitVote(googlePlaceId: string, request: TippingVoteRequest): Promise<TippingVote> {
-    const response = await apiClient.put<TippingVote>(`/tipping/votes/${googlePlaceId}`, request);
+  async submitReport(googlePlaceId: string, request: TipReportRequest): Promise<TipReport> {
+    const response = await apiClient.put<TipReport>(`/tipping/votes/${googlePlaceId}`, request);
     return response.data;
   },
 };
