@@ -21,9 +21,6 @@ public class BusinessSearchRequest
 /// <summary>Lean business data needed to render a map pin.</summary>
 public class BusinessPinResponse
 {
-    /// <summary>Internal Tipical business ID.</summary>
-    public Guid Id { get; set; }
-
     /// <summary>Google Place ID for this business.</summary>
     public required string GooglePlaceId { get; set; }
 

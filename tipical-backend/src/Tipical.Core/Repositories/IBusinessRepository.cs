@@ -5,7 +5,6 @@ namespace Tipical.Core.Repositories;
 
 public interface IBusinessRepository
 {
-    Task<Business?> GetByIdAsync(Guid id);
     Task<Business?> GetByGooglePlaceIdAsync(string googlePlaceId);
     Task<Dictionary<string, Business>> GetByGooglePlaceIdsAsync(IEnumerable<string> googlePlaceIds);
     Task<Business> GetOrCreateAsync(string googlePlaceId, string name, Point location);

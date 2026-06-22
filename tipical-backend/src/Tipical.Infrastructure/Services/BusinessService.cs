@@ -147,7 +147,6 @@ public class BusinessService(
 
         return ApplyPlaceFields(new BusinessPinResponse
         {
-            Id = business.Id,
             GooglePlaceId = business.GooglePlaceId,
             WinningPolicy = winner.Policy,
             WinningPolicyVoteCount = winner.Count

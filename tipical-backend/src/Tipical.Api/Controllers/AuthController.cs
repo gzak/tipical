@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -50,14 +49,4 @@ public class AuthController(
         }
     }
 
-    /// <summary>Return the authenticated user's profile.</summary>
-    [HttpGet("me")]
-    [Authorize]
-    [ProducesResponseType(typeof(UserInfoResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<UserInfoResponse> GetCurrentUser()
-    {
-        var userInfo = googleAuthService.GetUserInfoFromClaims(User);
-        return Ok(userInfo);
-    }
 }
