@@ -19,11 +19,6 @@ export const businessService = {
     return response.data;
   },
 
-  async getById(id: string): Promise<Business> {
-    const response = await apiClient.get<Business>(`/businesses/${id}`);
-    return response.data;
-  },
-
   async getDetails(googlePlaceId: string): Promise<BusinessDetail> {
     const response = await apiClient.get<BusinessDetail>(`/businesses/${googlePlaceId}/details`);
     return response.data;
