@@ -41,7 +41,7 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
 
   const renderPhotoArea = () => {
     if (detailLoading) {
-      return <div className="animate-pulse h-28 bg-gray-200 rounded-t" />;
+      return <div className="animate-pulse w-full h-28 bg-gray-200 rounded-t" />;
     }
     if (detailError) {
       return (
@@ -90,7 +90,7 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
   };
 
   return (
-    <div className="min-w-[200px] max-w-[260px]">
+    <div className="w-[260px]">
       {renderPhotoArea()}
 
       <div className="p-2">
