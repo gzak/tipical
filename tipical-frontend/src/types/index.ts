@@ -7,7 +7,6 @@ export const TippingPolicy = {
 export type TippingPolicy = typeof TippingPolicy[keyof typeof TippingPolicy];
 
 export interface Business {
-  id: string;
   googlePlaceId: string;
   name: string;
   latitude: number;

@@ -29,10 +29,3 @@ export function useBusinessSearch({ query, searchCenter, placeId, sessionToken }
   });
 }
 
-export function useBusinessById(id: string | null) {
-  return useQuery<Business>({
-    queryKey: ['businesses', id],
-    queryFn: () => businessService.getById(id!),
-    enabled: Boolean(id),
-  });
-}
