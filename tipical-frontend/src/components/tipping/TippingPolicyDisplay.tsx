@@ -1,18 +1,6 @@
 import { useTippingData } from '../../hooks';
-import type { Business, TippingPolicy as TippingPolicyType } from '../../types';
-import { TippingPolicy } from '../../types';
-
-const POLICY_LABELS: Record<TippingPolicyType, string> = {
-  [TippingPolicy.NoTips]: 'No Tips',
-  [TippingPolicy.TipsExcludeTax]: 'Tips on Subtotal',
-  [TippingPolicy.TipsIncludeTax]: 'Tips on Total',
-};
-
-const POLICY_BADGE_STYLES: Record<TippingPolicyType, string> = {
-  [TippingPolicy.NoTips]: 'bg-green-100 text-green-800',
-  [TippingPolicy.TipsExcludeTax]: 'bg-yellow-100 text-yellow-800',
-  [TippingPolicy.TipsIncludeTax]: 'bg-red-100 text-red-800',
-};
+import type { Business } from '../../types';
+import { POLICY_LABELS, POLICY_BADGE_STYLES } from '../../utils/policy';
 
 interface TippingPolicyDisplayProps {
   business: Business;
