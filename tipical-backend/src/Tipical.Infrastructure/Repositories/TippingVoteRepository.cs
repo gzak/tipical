@@ -44,13 +44,13 @@ public class TippingVoteRepository(ApplicationDbContext context) : ITippingVoteR
 
         // AsNoTracking bypasses EF Core identity map, ensuring the freshly-upserted
         // row is returned rather than a stale tracked entity loaded earlier in the request.
-        var vote = await context.TippingVotes
+        var report = await context.TippingVotes
             .AsNoTracking()
             .FirstOrDefaultAsync(tv => tv.BusinessId == businessId && tv.UserId == userId);
-        return vote!;
+        return report!;
     }
 
-    public async Task<Dictionary<TippingPolicy, int>> GetVoteCountsByPolicyAsync(Guid businessId)
+    public async Task<Dictionary<TippingPolicy, int>> GetReportCountsByPolicyAsync(Guid businessId)
     {
         return await context.TippingVotes
             .Where(tv => tv.BusinessId == businessId)

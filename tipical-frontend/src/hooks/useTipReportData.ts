@@ -2,29 +2,29 @@ import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tippingService } from '../services/tippingService';
 import { useAuthStore } from '../stores/authStore';
-import type { Business, TippingVote, TippingVotesAggregate, TippingPolicy } from '../types';
+import type { Business, TipReport, TipReportsAggregate, TipSuggestion } from '../types';
 
-export function useTippingData(business: Business) {
+export function useTipReportData(business: Business) {
   const { googlePlaceId } = business;
   const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore(s => s.isAuthenticated());
 
-  const votesQuery = useQuery<TippingVotesAggregate>({
+  const reportsQuery = useQuery<TipReportsAggregate>({
     queryKey: ['tipping', 'votes', googlePlaceId],
-    queryFn: () => tippingService.getVotes(googlePlaceId),
+    queryFn: () => tippingService.getReports(googlePlaceId),
   });
 
-  const userVoteQuery = useQuery<TippingVote | null>({
+  const userReportQuery = useQuery<TipReport | null>({
     queryKey: ['tipping', 'userVote', googlePlaceId],
-    queryFn: () => tippingService.getUserVote(googlePlaceId),
+    queryFn: () => tippingService.getUserReport(googlePlaceId),
     enabled: isAuthenticated,
   });
 
   // Mirror the latest aggregate into every business search cache entry so map
-  // pins reflect the current winning policy without a separate search refetch.
+  // pins reflect the current winning suggestion without a separate search refetch.
   useEffect(() => {
-    if (!votesQuery.data) return;
-    const { winningPolicy, winningPolicyVoteCount } = votesQuery.data;
+    if (!reportsQuery.data) return;
+    const { winningPolicy, winningPolicyVoteCount } = reportsQuery.data;
     queryClient.setQueriesData<Business[]>(
       { queryKey: ['businesses', 'search'], exact: false },
       (businesses) =>
@@ -34,11 +34,11 @@ export function useTippingData(business: Business) {
             : b
         )
     );
-  }, [votesQuery.data, googlePlaceId, queryClient]);
+  }, [reportsQuery.data, googlePlaceId, queryClient]);
 
-  const submitVoteMutation = useMutation<TippingVote, Error, TippingPolicy>({
+  const submitReportMutation = useMutation<TipReport, Error, TipSuggestion>({
     mutationFn: (policy) =>
-      tippingService.submitVote(googlePlaceId, {
+      tippingService.submitReport(googlePlaceId, {
         tippingPolicy: policy,
         name: business.name,
         latitude: business.latitude,
@@ -51,12 +51,12 @@ export function useTippingData(business: Business) {
   });
 
   return {
-    votes: votesQuery.data ?? null,
-    userVote: userVoteQuery.data ?? null,
-    isLoading: votesQuery.isLoading || userVoteQuery.isLoading,
-    error: votesQuery.error ?? userVoteQuery.error,
-    submitVote: (policy: TippingPolicy) => submitVoteMutation.mutate(policy),
-    isSubmitting: submitVoteMutation.isPending,
-    submitError: submitVoteMutation.error,
+    reports: reportsQuery.data ?? null,
+    userReport: userReportQuery.data ?? null,
+    isLoading: reportsQuery.isLoading || userReportQuery.isLoading,
+    error: reportsQuery.error ?? userReportQuery.error,
+    submitReport: (policy: TipSuggestion) => submitReportMutation.mutate(policy),
+    isSubmitting: submitReportMutation.isPending,
+    submitError: submitReportMutation.error,
   };
 }

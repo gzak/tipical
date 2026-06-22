@@ -93,7 +93,7 @@ export const GoogleAuthModal = () => {
         ) : (
           <div className="flex flex-col items-center space-y-4">
             <p className="text-sm text-gray-600 text-center">
-              Sign in with your Google account to vote on tipping policies and contribute to the community.
+              Sign in with your Google account to report tip suggestions and contribute to the community.
             </p>
             <GoogleLogin
               onSuccess={handleSuccess}

@@ -1,6 +1,6 @@
 namespace Tipical.Core.Models;
 
-/// <summary>Describes the tipping practice observed at a business.</summary>
+/// <summary>Describes the tip suggestion observed at a business.</summary>
 public enum TippingPolicy
 {
     /// <summary>The business does not request tips.</summary>

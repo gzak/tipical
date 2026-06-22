@@ -2,13 +2,13 @@ using Tipical.Core.Models;
 
 namespace Tipical.Core.DTOs;
 
-/// <summary>Request body for submitting or updating a tipping policy vote.</summary>
+/// <summary>Request body for submitting or updating a tip suggestion report.</summary>
 public class TippingVoteRequest
 {
-    /// <summary>The tipping policy the user is voting for.</summary>
+    /// <summary>The tip suggestion the user is reporting.</summary>
     public required TippingPolicy TippingPolicy { get; set; }
 
-    /// <summary>Display name of the business being voted on.</summary>
+    /// <summary>Display name of the business being reported on.</summary>
     public required string Name { get; set; }
 
     /// <summary>Latitude of the business location.</summary>
@@ -18,40 +18,40 @@ public class TippingVoteRequest
     public required double Longitude { get; set; }
 }
 
-/// <summary>A single user's tipping policy vote for a business.</summary>
+/// <summary>A single user's tip suggestion report for a business.</summary>
 public class TippingVoteResponse
 {
-    /// <summary>Internal vote ID.</summary>
+    /// <summary>Internal report ID.</summary>
     public Guid Id { get; set; }
 
-    /// <summary>Google Place ID of the business this vote is for.</summary>
+    /// <summary>Google Place ID of the business this report is for.</summary>
     public string GooglePlaceId { get; set; } = null!;
 
-    /// <summary>The tipping policy the user voted for.</summary>
+    /// <summary>The tip suggestion the user reported.</summary>
     public TippingPolicy TippingPolicy { get; set; }
 
-    /// <summary>When this vote was first cast.</summary>
+    /// <summary>When this report was first submitted.</summary>
     public DateTime CreatedAt { get; set; }
 
-    /// <summary>When this vote was last updated.</summary>
+    /// <summary>When this report was last updated.</summary>
     public DateTime UpdatedAt { get; set; }
 }
 
-/// <summary>Aggregate tipping policy vote counts for a business.</summary>
+/// <summary>Aggregate tip suggestion report counts for a business.</summary>
 public class TippingVotesAggregateResponse
 {
     /// <summary>Google Place ID of the business.</summary>
     public string GooglePlaceId { get; set; } = null!;
 
-    /// <summary>The tipping policy with the most votes, or null if no votes have been cast.</summary>
+    /// <summary>The tip suggestion with the most reports, or null if none.</summary>
     public TippingPolicy? WinningPolicy { get; set; }
 
-    /// <summary>Number of votes for the winning policy.</summary>
+    /// <summary>Number of reports for the winning suggestion.</summary>
     public int? WinningPolicyVoteCount { get; set; }
 
-    /// <summary>Vote count broken down by tipping policy.</summary>
+    /// <summary>Report count broken down by tip suggestion.</summary>
     public Dictionary<TippingPolicy, int> VotesByPolicy { get; set; } = [];
 
-    /// <summary>Total number of votes across all policies.</summary>
+    /// <summary>Total number of reports across all suggestions.</summary>
     public int TotalVotes { get; set; }
 }

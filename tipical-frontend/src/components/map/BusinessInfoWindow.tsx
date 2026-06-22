@@ -124,7 +124,7 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
         {business.winningPolicyVoteCount != null && business.winningPolicyVoteCount > 0 && (
           <p className="text-xs text-gray-400 mt-0.5 mb-1">
             Based on {business.winningPolicyVoteCount}{' '}
-            {business.winningPolicyVoteCount === 1 ? 'vote' : 'votes'}
+            {business.winningPolicyVoteCount === 1 ? 'report' : 'reports'}
           </p>
         )}
 
@@ -133,10 +133,10 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
           size="sm"
           fullWidth
           onClick={handleCTA}
-          aria-label={isAuthenticated ? `Vote for ${business.name}` : `Sign in to vote for ${business.name}`}
+          aria-label={isAuthenticated ? `Report for ${business.name}` : `Sign in to report for ${business.name}`}
           className="mt-2"
         >
-          {isAuthenticated ? 'Vote' : 'Sign in to vote'}
+          {isAuthenticated ? 'Report' : 'Sign in to report'}
         </Button>
       </div>
     </div>

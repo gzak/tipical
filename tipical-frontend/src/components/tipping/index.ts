@@ -1,2 +1,2 @@
-export { TippingPolicyDisplay } from './TippingPolicyDisplay';
-export { TippingPolicySelector } from './TippingPolicySelector';
+export { TipSuggestionDisplay } from './TipSuggestionDisplay';
+export { TipSuggestionSelector } from './TipSuggestionSelector';

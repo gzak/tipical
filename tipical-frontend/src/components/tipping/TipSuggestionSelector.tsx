@@ -1,11 +1,11 @@
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
-import { useTippingData } from '../../hooks';
-import type { Business, TippingPolicy as TippingPolicyType } from '../../types';
-import { TippingPolicy } from '../../types';
+import { useTipReportData } from '../../hooks';
+import type { Business, TipSuggestion as TipSuggestionType } from '../../types';
+import { TipSuggestion } from '../../types';
 
 interface PolicyOption {
-  policy: TippingPolicyType;
+  policy: TipSuggestionType;
   label: string;
   selectedStyles: string;
   idleStyles: string;
@@ -13,52 +13,52 @@ interface PolicyOption {
 
 const POLICY_OPTIONS: PolicyOption[] = [
   {
-    policy: TippingPolicy.NoTips,
+    policy: TipSuggestion.NoTips,
     label: 'No Tips',
     selectedStyles: 'bg-green-600 text-white border-green-600',
     idleStyles: 'bg-white text-green-700 border-green-300 hover:bg-green-50',
   },
   {
-    policy: TippingPolicy.TipsExcludeTax,
+    policy: TipSuggestion.TipsExcludeTax,
     label: 'Tips on Subtotal',
     selectedStyles: 'bg-yellow-500 text-white border-yellow-500',
     idleStyles: 'bg-white text-yellow-700 border-yellow-300 hover:bg-yellow-50',
   },
   {
-    policy: TippingPolicy.TipsIncludeTax,
+    policy: TipSuggestion.TipsIncludeTax,
     label: 'Tips on Total',
     selectedStyles: 'bg-red-600 text-white border-red-600',
     idleStyles: 'bg-white text-red-700 border-red-300 hover:bg-red-50',
   },
 ];
 
-interface TippingPolicySelectorProps {
+interface TipSuggestionSelectorProps {
   business: Business;
 }
 
-export function TippingPolicySelector({ business }: TippingPolicySelectorProps) {
+export function TipSuggestionSelector({ business }: TipSuggestionSelectorProps) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated());
   const setShowAuthModal = useUIStore(s => s.setShowAuthModal);
-  const { userVote, submitVote, isSubmitting, submitError } = useTippingData(business);
+  const { userReport, submitReport, isSubmitting, submitError } = useTipReportData(business);
 
-  const handleVote = (policy: TippingPolicyType) => {
+  const handleReport = (policy: TipSuggestionType) => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
-    submitVote(policy);
+    submitReport(policy);
   };
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-gray-700">What's the tipping policy here?</p>
+      <p className="text-sm font-medium text-gray-700">What's the tip suggestion here?</p>
       <div className="flex flex-col gap-2">
         {POLICY_OPTIONS.map(({ policy, label, selectedStyles, idleStyles }) => {
-          const isSelected = userVote?.tippingPolicy === policy;
+          const isSelected = userReport?.tippingPolicy === policy;
           return (
             <button
               key={policy}
-              onClick={() => handleVote(policy)}
+              onClick={() => handleReport(policy)}
               disabled={isSubmitting}
               aria-pressed={isSelected}
               className={`
@@ -75,10 +75,10 @@ export function TippingPolicySelector({ business }: TippingPolicySelectorProps) 
         })}
       </div>
       {submitError && (
-        <p className="text-xs text-red-600 text-center">Failed to submit vote. Please try again.</p>
+        <p className="text-xs text-red-600 text-center">Failed to submit report. Please try again.</p>
       )}
       {!isAuthenticated && (
-        <p className="text-xs text-gray-500 text-center">Sign in to cast your vote</p>
+        <p className="text-xs text-gray-500 text-center">Sign in to submit a report</p>
       )}
     </div>
   );
