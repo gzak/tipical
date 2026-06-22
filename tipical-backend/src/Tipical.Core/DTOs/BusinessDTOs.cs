@@ -30,9 +30,6 @@ public class BusinessPinResponse
     /// <summary>Business display name.</summary>
     public string Name { get; set; } = null!;
 
-    /// <summary>Formatted street address.</summary>
-    public string Address { get; set; } = null!;
-
     /// <summary>Latitude of the business location.</summary>
     public decimal Latitude { get; set; }
 
@@ -53,7 +50,7 @@ public class BusinessPinResponse
 public class BusinessDetailResponse
 {
     /// <summary>Formatted street address.</summary>
-    public string Address { get; set; } = null!;
+    public string? Address { get; set; }
 
     /// <summary>Business phone number, if available.</summary>
     public string? Phone { get; set; }

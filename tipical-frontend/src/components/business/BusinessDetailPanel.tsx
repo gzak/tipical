@@ -37,9 +37,9 @@ export function BusinessDetailPanel({ business }: BusinessDetailPanelProps) {
             </div>
           ) : (
             <>
-              <p className="text-sm text-gray-600">
-                {business.address ?? detail?.address}
-              </p>
+              {detail?.address && (
+                <p className="text-sm text-gray-600">{detail.address}</p>
+              )}
               {detail?.phone && (
                 <p className="text-sm text-gray-600">{detail.phone}</p>
               )}

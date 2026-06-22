@@ -36,12 +36,12 @@ public class BusinessService(
     {
         Place place;
         try { place = await googlePlacesService.GetPlaceDetailsAsync(googlePlaceId); }
-        catch { return null; }
+        catch (RpcException) { return null; }
 
         var photos = await FetchPhotoUrisAsync(place);
         return new BusinessDetailResponse
         {
-            Address = place.FormattedAddress,
+            Address = !string.IsNullOrWhiteSpace(place.FormattedAddress) ? place.FormattedAddress : null,
             Phone = !string.IsNullOrWhiteSpace(place.InternationalPhoneNumber) ? place.InternationalPhoneNumber : null,
             Website = !string.IsNullOrWhiteSpace(place.WebsiteUri) ? place.WebsiteUri : null,
             Rating = place.HasUserRatingCount && place.UserRatingCount > 0 ? place.Rating : null,
@@ -129,7 +129,6 @@ public class BusinessService(
     private static BusinessPinResponse ApplyPlaceFields(BusinessPinResponse response, Place place)
     {
         response.Name = place.DisplayName.Text;
-        response.Address = place.FormattedAddress;
         response.Latitude = (decimal)place.Location.Latitude;
         response.Longitude = (decimal)place.Location.Longitude;
         response.PlaceTypes = [.. place.Types_];
