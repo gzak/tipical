@@ -51,6 +51,7 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
         isSearching={isLoading || isPlaceholderData}
         initialCenter={initialCenter}
         initialZoom={initialZoom}
+        placeId={placeId}
         searchBarSlot={<SearchBar />}
         userProfileSlot={<UserProfile />}
       />

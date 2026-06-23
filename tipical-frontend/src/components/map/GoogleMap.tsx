@@ -15,6 +15,7 @@ interface GoogleMapProps {
   isSearching?: boolean;
   initialCenter: { lat: number; lng: number };
   initialZoom: number;
+  placeId?: string | null;
   searchBarSlot?: React.ReactNode;
   userProfileSlot?: React.ReactNode;
 }
@@ -130,13 +131,18 @@ function MyLocationButton({ latitude, longitude, gpsLoading, requestLocation }: 
   );
 }
 
-export function GoogleMap({ businesses = [], isSearching = false, initialCenter, initialZoom, searchBarSlot, userProfileSlot }: GoogleMapProps) {
+export function GoogleMap({ businesses = [], isSearching = false, initialCenter, initialZoom, placeId, searchBarSlot, userProfileSlot }: GoogleMapProps) {
   const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
   const [center, setCenter] = useState(initialCenter);
   const [zoom, setZoom] = useState(initialZoom);
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [tilesLoaded, setTilesLoaded] = useState(false);
   const { isSupported, latitude, longitude, isLoading: gpsLoading, requestLocation } = useGeolocation();
+
+  useEffect(() => {
+    setActiveMarkerId(placeId ?? null);
+    if (!placeId) closeBusinessPanel();
+  }, [placeId, closeBusinessPanel]);
 
   const handleMapClick = useCallback(() => {
     setActiveMarkerId(null);
