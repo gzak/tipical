@@ -35,12 +35,15 @@ function MapController({ businesses }: { businesses: Business[] }) {
     businesses.forEach(b => bounds.extend({ lat: b.latitude, lng: b.longitude }));
     map.fitBounds(bounds, 80);
 
+    const MAX_FIT_ZOOM = 17;
     const listener = map.addListener('idle', () => {
       listener.remove();
       const c = map.getCenter();
       const z = map.getZoom();
       if (c && z !== undefined) {
-        syncButtonBase({ latitude: c.lat(), longitude: c.lng(), zoom: z });
+        const clampedZoom = Math.min(z, MAX_FIT_ZOOM);
+        if (clampedZoom !== z) map.setZoom(clampedZoom);
+        syncButtonBase({ latitude: c.lat(), longitude: c.lng(), zoom: clampedZoom });
       }
     });
 
