@@ -192,10 +192,15 @@ function MyLocationButton({ latitude, longitude, gpsLoading, requestLocation }: 
 
 export function GoogleMap({ businesses = [], isSearching = false, initialCenter, initialZoom, placeId, searchBarSlot, userProfileSlot }: GoogleMapProps) {
   const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
+  const activeMarkerId = useUIStore(s => s.activeMarkerId);
+  const setActiveMarkerId = useUIStore(s => s.setActiveMarkerId);
+  const clearAutocompleteUI = useUIStore(s => s.clearAutocompleteUI);
   const fitBoundsOnResults = useSearchStore(s => s.fitBoundsOnResults);
+  const clearSearch = useSearchStore(s => s.clearSearch);
   const [center, setCenter] = useState(initialCenter);
   const [zoom, setZoom] = useState(initialZoom);
-  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+  const centerRef = useRef(initialCenter);
+  const zoomRef = useRef(initialZoom);
   const [autocompleteOpen, setAutocompleteOpen] = useState(false);
   const [tilesLoaded, setTilesLoaded] = useState(false);
   const { isSupported, latitude, longitude, isLoading: gpsLoading, requestLocation } = useGeolocation();
@@ -204,7 +209,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
     setActiveMarkerId(placeId ?? null);
     setAutocompleteOpen(!!placeId);
     if (!placeId) closeBusinessPanel();
-  }, [placeId, closeBusinessPanel]);
+  }, [placeId, setActiveMarkerId, closeBusinessPanel]);
 
   // Re-open the info window if the user reselects the same autocomplete suggestion
   // (placeId unchanged so the effect above doesn't fire, but fitBoundsOnResults resets to true).
@@ -213,22 +218,27 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
       setActiveMarkerId(placeId);
       setAutocompleteOpen(true);
     }
-  }, [placeId, fitBoundsOnResults]);
+  }, [placeId, fitBoundsOnResults, setActiveMarkerId]);
 
   const handleMapClick = useCallback(() => {
     setActiveMarkerId(null);
     closeBusinessPanel();
-  }, [closeBusinessPanel]);
+  }, [setActiveMarkerId, closeBusinessPanel]);
 
   const handleMarkerClick = useCallback((id: string) => {
     setAutocompleteOpen(false);
-    setActiveMarkerId(prev => (prev === id ? null : id));
-  }, []);
+    setActiveMarkerId(useUIStore.getState().activeMarkerId === id ? null : id);
+  }, [setActiveMarkerId]);
 
   const handleInfoWindowClose = useCallback(() => {
-    setActiveMarkerId(null);
     setAutocompleteOpen(false);
-  }, []);
+    if (placeId) {
+      clearSearch({ latitude: centerRef.current.lat, longitude: centerRef.current.lng, zoom: zoomRef.current });
+      clearAutocompleteUI();
+    } else {
+      setActiveMarkerId(null);
+    }
+  }, [placeId, clearSearch, clearAutocompleteUI, setActiveMarkerId]);
 
   return (
     <div className="relative w-full h-full">
@@ -248,10 +258,13 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
         clickableIcons={false}
         onTilesLoaded={() => setTilesLoaded(true)}
         onIdle={e => {
-          const c = e.map.getCenter();
-          const z = e.map.getZoom();
-          if (c) setCenter({ lat: c.lat(), lng: c.lng() });
-          if (z !== undefined) setZoom(z);
+          const c = e.map.getCenter()!;
+          const val = { lat: c.lat(), lng: c.lng() };
+          const z = e.map.getZoom()!;
+          setCenter(val);
+          centerRef.current = val;
+          setZoom(z);
+          zoomRef.current = z;
         }}
         onClick={handleMapClick}
       >

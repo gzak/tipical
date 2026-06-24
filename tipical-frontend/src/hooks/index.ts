@@ -1,4 +1,5 @@
 export { useClickOutside } from './useClickOutside';
+export { useClearAutocomplete } from './useClearAutocomplete';
 export { useGeolocation } from './useGeolocation';
 export { useInitialLocation } from './useInitialLocation';
 export { useDebounce } from './useDebounce';
