@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Map, AdvancedMarker, MapControl, ControlPosition, useMap } from '@vis.gl/react-google-maps';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { Map, AdvancedMarker, InfoWindow, MapControl, ControlPosition, useMap } from '@vis.gl/react-google-maps';
 import { useUIStore } from '../../stores/uiStore';
 import { useSearchStore } from '../../stores/searchStore';
 import { useGeolocation } from '../../hooks';
 import type { Business } from '../../types';
-import { BusinessMarker } from './BusinessMarker';
+import { BusinessMarker, INFO_WINDOW_OFFSET } from './BusinessMarker';
+import { BusinessInfoWindow } from './BusinessInfoWindow';
 import { SearchThisAreaButton } from './SearchThisAreaButton';
 
 const MAP_CONTAINER_STYLE: React.CSSProperties = { width: '100%', height: '100%' };
@@ -20,7 +21,13 @@ interface GoogleMapProps {
   userProfileSlot?: React.ReactNode;
 }
 
-function MapController({ businesses }: { businesses: Business[] }) {
+const MAX_FIT_ZOOM = 17;
+// Pixels to shift the pin below viewport center so the InfoWindow above it is centered vertically.
+// InfoWindow sits ~274px above the pin tip (34px pixelOffset + ~240px content height).
+// Centering: half of 274 ≈ 137px; 120px gives a slightly below-center result which feels natural.
+const INFO_WINDOW_VERTICAL_OFFSET_PX = 120;
+
+function FitBoundsController({ businesses }: { businesses: Business[] }) {
   const map = useMap();
   const fitBoundsOnResults = useSearchStore(s => s.fitBoundsOnResults);
   const clearFitBounds = useSearchStore(s => s.clearFitBounds);
@@ -32,11 +39,11 @@ function MapController({ businesses }: { businesses: Business[] }) {
   useEffect(() => {
     if (!map || !fitBoundsRef.current || !businesses.length) return;
     clearFitBounds();
+
     const bounds = new google.maps.LatLngBounds();
     businesses.forEach(b => bounds.extend({ lat: b.latitude, lng: b.longitude }));
     map.fitBounds(bounds, 80);
 
-    const MAX_FIT_ZOOM = 17;
     const listener = map.addListener('idle', () => {
       listener.remove();
       const c = map.getCenter();
@@ -46,6 +53,43 @@ function MapController({ businesses }: { businesses: Business[] }) {
         if (clampedZoom !== z) map.setZoom(clampedZoom);
         syncButtonBase({ latitude: c.lat(), longitude: c.lng(), zoom: clampedZoom });
       }
+    });
+
+    return () => listener.remove();
+  }, [businesses, map, clearFitBounds, syncButtonBase]);
+
+  return null;
+}
+
+// Only rendered when placeId is set, so it implicitly knows it's in autocomplete mode —
+// no need to pass or track placeId as a dep.
+function AutocompletePanController({ businesses }: { businesses: Business[] }) {
+  const map = useMap();
+  const fitBoundsOnResults = useSearchStore(s => s.fitBoundsOnResults);
+  const clearFitBounds = useSearchStore(s => s.clearFitBounds);
+  const syncButtonBase = useSearchStore(s => s.syncButtonBase);
+
+  const fitBoundsRef = useRef(fitBoundsOnResults);
+  fitBoundsRef.current = fitBoundsOnResults;
+
+  useEffect(() => {
+    if (!map || !fitBoundsRef.current || businesses.length !== 1) return;
+    clearFitBounds();
+
+    const { latitude, longitude } = businesses[0];
+    const latDegreesPerPixel = 360 / (256 * Math.pow(2, MAX_FIT_ZOOM)) * Math.cos(latitude * Math.PI / 180);
+    const offsetTarget = { lat: latitude + INFO_WINDOW_VERTICAL_OFFSET_PX * latDegreesPerPixel, lng: longitude };
+
+    if (map.getZoom() === MAX_FIT_ZOOM) {
+      map.panTo(offsetTarget);
+    } else {
+      map.setCenter(offsetTarget);
+      map.setZoom(MAX_FIT_ZOOM);
+    }
+
+    const listener = map.addListener('idle', () => {
+      listener.remove();
+      syncButtonBase({ latitude: map.getCenter()!.lat(), longitude: map.getCenter()!.lng(), zoom: map.getZoom()! });
     });
 
     return () => listener.remove();
@@ -74,11 +118,16 @@ function UserLocationMarker({ latitude, longitude }: { latitude: number; longitu
 interface MapMarkersProps {
   businesses: Business[];
   activeMarkerId: string | null;
+  disableAutoPan: boolean;
   onMarkerClick: (id: string) => void;
   onInfoWindowClose: () => void;
 }
 
-function MapMarkers({ businesses, activeMarkerId, onMarkerClick, onInfoWindowClose }: MapMarkersProps) {
+const MapMarkers = memo(function MapMarkers({ businesses, activeMarkerId, disableAutoPan, onMarkerClick, onInfoWindowClose }: MapMarkersProps) {
+  const activeBusiness = activeMarkerId
+    ? businesses.find(b => b.googlePlaceId === activeMarkerId) ?? null
+    : null;
+
   return (
     <>
       {businesses.map(business => (
@@ -87,12 +136,22 @@ function MapMarkers({ businesses, activeMarkerId, onMarkerClick, onInfoWindowClo
           business={business}
           isActive={activeMarkerId === business.googlePlaceId}
           onMarkerClick={onMarkerClick}
-          onInfoWindowClose={onInfoWindowClose}
         />
       ))}
+      {activeBusiness && (
+        <InfoWindow
+          position={{ lat: activeBusiness.latitude, lng: activeBusiness.longitude }}
+          pixelOffset={INFO_WINDOW_OFFSET}
+          onCloseClick={onInfoWindowClose}
+          disableAutoPan={disableAutoPan || undefined}
+          zIndex={50}
+        >
+          <BusinessInfoWindow business={activeBusiness} onClose={onInfoWindowClose} />
+        </InfoWindow>
+      )}
     </>
   );
-}
+});
 
 interface MyLocationButtonProps {
   latitude: number | null;
@@ -133,16 +192,28 @@ function MyLocationButton({ latitude, longitude, gpsLoading, requestLocation }: 
 
 export function GoogleMap({ businesses = [], isSearching = false, initialCenter, initialZoom, placeId, searchBarSlot, userProfileSlot }: GoogleMapProps) {
   const closeBusinessPanel = useUIStore(s => s.closeBusinessPanel);
+  const fitBoundsOnResults = useSearchStore(s => s.fitBoundsOnResults);
   const [center, setCenter] = useState(initialCenter);
   const [zoom, setZoom] = useState(initialZoom);
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+  const [autocompleteOpen, setAutocompleteOpen] = useState(false);
   const [tilesLoaded, setTilesLoaded] = useState(false);
   const { isSupported, latitude, longitude, isLoading: gpsLoading, requestLocation } = useGeolocation();
 
   useEffect(() => {
     setActiveMarkerId(placeId ?? null);
+    setAutocompleteOpen(!!placeId);
     if (!placeId) closeBusinessPanel();
   }, [placeId, closeBusinessPanel]);
+
+  // Re-open the info window if the user reselects the same autocomplete suggestion
+  // (placeId unchanged so the effect above doesn't fire, but fitBoundsOnResults resets to true).
+  useEffect(() => {
+    if (placeId && fitBoundsOnResults) {
+      setActiveMarkerId(placeId);
+      setAutocompleteOpen(true);
+    }
+  }, [placeId, fitBoundsOnResults]);
 
   const handleMapClick = useCallback(() => {
     setActiveMarkerId(null);
@@ -150,11 +221,13 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
   }, [closeBusinessPanel]);
 
   const handleMarkerClick = useCallback((id: string) => {
+    setAutocompleteOpen(false);
     setActiveMarkerId(prev => (prev === id ? null : id));
   }, []);
 
   const handleInfoWindowClose = useCallback(() => {
     setActiveMarkerId(null);
+    setAutocompleteOpen(false);
   }, []);
 
   return (
@@ -182,7 +255,10 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
         }}
         onClick={handleMapClick}
       >
-        <MapController businesses={businesses} />
+        {placeId
+          ? <AutocompletePanController businesses={businesses} />
+          : <FitBoundsController businesses={businesses} />
+        }
         {latitude !== null && longitude !== null && (
           <>
             <MapPanner latitude={latitude} longitude={longitude} />
@@ -193,6 +269,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
           <MapMarkers
             businesses={businesses}
             activeMarkerId={activeMarkerId}
+            disableAutoPan={autocompleteOpen}
             onMarkerClick={handleMarkerClick}
             onInfoWindowClose={handleInfoWindowClose}
           />
