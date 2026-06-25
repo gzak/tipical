@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useSearchStore } from '../../stores/searchStore';
 import { useClickOutside } from '../../hooks/useClickOutside';
+import { useClearAutocomplete } from '../../hooks/useClearAutocomplete';
 import { radiusFromZoom } from '../../utils/geo';
 import { useDebounce } from '../../hooks/useDebounce';
 
@@ -51,16 +52,17 @@ function newAutocompleteSessionToken(uuid: string): google.maps.places.Autocompl
 }
 
 export function SearchBar() {
-  const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<google.maps.places.AutocompleteSuggestion[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const sessionTokenRef = useRef<string | null>(null);
 
+  const inputValue = useSearchStore(s => s.inputValue);
+  const setInputValue = useSearchStore(s => s.setInputValue);
   const setQuery = useSearchStore(s => s.setQuery);
   const setPlaceId = useSearchStore(s => s.setPlaceId);
   const setSearchCenter = useSearchStore(s => s.setSearchCenter);
-  const clearSearch = useSearchStore(s => s.clearSearch);
   const placeId = useSearchStore(s => s.placeId);
+  const clearAutocomplete = useClearAutocomplete();
   const map = useMap();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,6 +82,15 @@ export function SearchBar() {
   const resetSession = useCallback(() => {
     sessionTokenRef.current = null;
   }, []);
+
+  // When inputValue is cleared externally (e.g. info window ✕), clean up local autocomplete state.
+  useEffect(() => {
+    if (!inputValue) {
+      setSuggestions([]);
+      setActiveIndex(-1);
+      resetSession();
+    }
+  }, [inputValue, resetSession]);
 
   useEffect(() => {
     const trimmed = debouncedInput.trim();
@@ -119,16 +130,12 @@ export function SearchBar() {
     setActiveIndex(-1);
     setPlaceId(prediction.placeId, displayText, sessionTokenRef.current);
     resetSession();
-  }, [setPlaceId, resetSession]);
+  }, [setInputValue, setPlaceId, resetSession]);
 
   const handleClear = useCallback(() => {
-    setInputValue('');
-    setSuggestions([]);
-    setActiveIndex(-1);
     resetSession();
-    const center = map!.getCenter()!;
-    clearSearch({ latitude: center.lat(), longitude: center.lng(), zoom: map!.getZoom()! });
-  }, [map, clearSearch, resetSession]);
+    clearAutocomplete();
+  }, [resetSession, clearAutocomplete]);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +157,7 @@ export function SearchBar() {
       setActiveIndex(-1);
       resetSession();
     }
-  }, [startSession, resetSession]);
+  }, [setInputValue, startSession, resetSession]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!suggestions.length) return;

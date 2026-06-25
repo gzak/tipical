@@ -11,12 +11,14 @@ export interface SearchCenter {
 
 interface SearchState {
   query: string;
+  inputValue: string;
   searchCenter: SearchCenter;
   buttonBaseCenter: SearchCenter;
   placeId: string | null;
   sessionToken: string | null;
   fitBoundsOnResults: boolean;
   setQuery: (query: string) => void;
+  setInputValue: (value: string) => void;
   setSearchCenter: (center: SearchCenter) => void;
   setPlaceId: (placeId: string, displayText: string, sessionToken: string) => void;
   clearFitBounds: () => void;
@@ -29,18 +31,20 @@ type SearchStoreApi = ReturnType<typeof createSearchStore>;
 function createSearchStore(initialCenter: SearchCenter) {
   return createStore<SearchState>((set) => ({
     query: '',
+    inputValue: '',
     searchCenter: initialCenter,
     buttonBaseCenter: initialCenter,
     placeId: null,
     sessionToken: null,
     fitBoundsOnResults: false,
     setQuery: (query) => set({ query, placeId: null, sessionToken: null, fitBoundsOnResults: true }),
+    setInputValue: (inputValue) => set({ inputValue }),
     setSearchCenter: (searchCenter) => set({ searchCenter, buttonBaseCenter: searchCenter }),
     setPlaceId: (placeId, displayText, sessionToken) =>
       set({ placeId, query: displayText, sessionToken, fitBoundsOnResults: true }),
     clearFitBounds: () => set({ fitBoundsOnResults: false }),
     syncButtonBase: (buttonBaseCenter) => set({ buttonBaseCenter }),
-    clearSearch: (center) => set({ query: '', placeId: null, sessionToken: null, fitBoundsOnResults: false, searchCenter: center, buttonBaseCenter: center }),
+    clearSearch: (center) => set({ query: '', inputValue: '', placeId: null, sessionToken: null, fitBoundsOnResults: false, searchCenter: center, buttonBaseCenter: center }),
   }));
 }
 
