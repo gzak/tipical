@@ -7,10 +7,11 @@ export const POLICY_LABELS: Record<TipSuggestionType, string> = {
   [TipSuggestion.TipsIncludeTax]: 'Tips on Total',
 };
 
-export const POLICY_BADGE_STYLES: Record<TipSuggestionType, string> = {
+export const POLICY_BADGE_STYLES: Record<TipSuggestionType | 'unknown', string> = {
   [TipSuggestion.NoTips]: 'bg-green-100 text-green-800',
   [TipSuggestion.TipsExcludeTax]: 'bg-yellow-100 text-yellow-800',
   [TipSuggestion.TipsIncludeTax]: 'bg-red-100 text-red-800',
+  unknown: 'bg-gray-100 text-gray-600',
 };
 
 export const POLICY_HEX_COLORS: Record<TipSuggestionType | 'unknown', string> = {

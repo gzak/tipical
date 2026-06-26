@@ -116,8 +116,8 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
             {POLICY_LABELS[business.winningPolicy]}
           </span>
         ) : (
-          <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-            No data yet
+          <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${POLICY_BADGE_STYLES.unknown}`}>
+            No reports
           </span>
         )}
 
