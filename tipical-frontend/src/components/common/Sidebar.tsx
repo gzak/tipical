@@ -5,6 +5,7 @@ export interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: ReactNode;
   children: ReactNode;
   position?: 'left' | 'right';
   width?: 'sm' | 'md' | 'lg';
@@ -14,6 +15,7 @@ export const Sidebar = ({
   isOpen,
   onClose,
   title,
+  subtitle,
   children,
   position = 'right',
   width = 'md',
@@ -71,11 +73,14 @@ export const Sidebar = ({
         aria-labelledby={title ? 'sidebar-title' : undefined}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-start justify-between p-4 border-b border-gray-200 flex-shrink-0">
           {title && (
-            <h2 id="sidebar-title" className="text-xl font-semibold text-gray-900">
-              {title}
-            </h2>
+            <div>
+              <h2 id="sidebar-title" className="text-xl font-semibold text-gray-900">
+                {title}
+              </h2>
+              {subtitle && <div className="mt-0.5">{subtitle}</div>}
+            </div>
           )}
           <button
             onClick={onClose}
@@ -94,7 +99,7 @@ export const Sidebar = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+        <div className="flex-1 overflow-y-auto px-6 pt-3 pb-6">{children}</div>
       </div>
     </>
   );

@@ -1,6 +1,6 @@
 import { useShallow } from 'zustand/react/shallow';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { Sidebar } from '../common/Sidebar';
-import { TipSuggestionDisplay } from '../tipping/TipSuggestionDisplay';
 import { TipSuggestionSelector } from '../tipping/TipSuggestionSelector';
 import { useUIStore } from '../../stores/uiStore';
 import { useBusinessDetail } from '../../hooks';
@@ -18,76 +18,57 @@ export function BusinessDetailPanel({ business }: BusinessDetailPanelProps) {
     }))
   );
 
-  const { data: detail, isLoading: detailLoading } = useBusinessDetail(business.googlePlaceId);
+  const { data: detail, isLoading: detailLoading } = useBusinessDetail(business.googlePlaceId, { enabled: showBusinessPanel });
+
+  const photos = detail?.photos ?? [];
+  const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${business.googlePlaceId}`;
+
+  const mapsLink = (
+    <a
+      href={mapsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+    >
+      Open in Google Maps
+      <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+    </a>
+  );
 
   return (
     <Sidebar
       isOpen={showBusinessPanel}
       onClose={closeBusinessPanel}
       title={business.name}
-      width="md"
+      subtitle={mapsLink}
+      width="sm"
     >
-      <div className="space-y-6">
-        {/* Business info */}
-        <div className="space-y-2">
-          {detailLoading ? (
-            <div className="space-y-2">
-              <div className="animate-pulse h-4 bg-gray-100 rounded w-3/4" />
-              <div className="animate-pulse h-4 bg-gray-100 rounded w-1/2" />
-            </div>
-          ) : (
-            <>
-              {detail?.address && (
-                <p className="text-sm text-gray-600">{detail.address}</p>
-              )}
-              {detail?.phone && (
-                <p className="text-sm text-gray-600">{detail.phone}</p>
-              )}
-              {detail?.website && (
-                <a
-                  href={detail.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline break-all"
-                >
-                  {detail.website}
-                </a>
-              )}
-            </>
-          )}
-          {business.placeTypes && business.placeTypes.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-1">
-              {business.placeTypes.map(type => (
-                <span
-                  key={type}
-                  className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
-                >
-                  {type.replace(/_/g, ' ')}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+      <div className="space-y-3">
+        {/* Photo grid */}
+        {detailLoading ? (
+          <div className="animate-pulse aspect-[2/1] bg-gray-100 rounded" />
+        ) : photos.length > 0 && (
+          <div className="grid grid-cols-2 gap-1">
+            <img
+              src={photos[0]}
+              alt={business.name}
+              className="col-span-2 w-full aspect-[2/1] object-cover rounded"
+            />
+            {photos.slice(1, 5).map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                alt={`${business.name} photo ${i + 2}`}
+                className="w-full aspect-[3/2] object-cover rounded"
+              />
+            ))}
+          </div>
+        )}
 
-        <hr className="border-gray-200" />
+        {(detailLoading || photos.length > 0) && <hr className="border-gray-200" />}
 
-        {/* Tip suggestion display */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            Tip Suggestion
-          </h3>
-          <TipSuggestionDisplay business={business} />
-        </div>
-
-        <hr className="border-gray-200" />
-
-        {/* Submit report */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            Submit Your Report
-          </h3>
-          <TipSuggestionSelector business={business} />
-        </div>
+        {/* Reporting */}
+        <TipSuggestionSelector business={business} />
       </div>
     </Sidebar>
   );

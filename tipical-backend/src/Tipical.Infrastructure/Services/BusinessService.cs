@@ -41,9 +41,6 @@ public class BusinessService(
         var photos = await FetchPhotoUrisAsync(place);
         return new BusinessDetailResponse
         {
-            Address = !string.IsNullOrWhiteSpace(place.FormattedAddress) ? place.FormattedAddress : null,
-            Phone = !string.IsNullOrWhiteSpace(place.InternationalPhoneNumber) ? place.InternationalPhoneNumber : null,
-            Website = !string.IsNullOrWhiteSpace(place.WebsiteUri) ? place.WebsiteUri : null,
             Rating = place.HasUserRatingCount && place.UserRatingCount > 0 ? place.Rating : null,
             ReviewCount = place.HasUserRatingCount ? place.UserRatingCount : null,
             Photos = photos,
@@ -131,7 +128,6 @@ public class BusinessService(
         response.Name = place.DisplayName.Text;
         response.Latitude = (decimal)place.Location.Latitude;
         response.Longitude = (decimal)place.Location.Longitude;
-        response.PlaceTypes = [.. place.Types_];
         return response;
     }
 
