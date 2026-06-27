@@ -146,7 +146,7 @@ const MapMarkers = memo(function MapMarkers({ businesses, activeMarkerId, disabl
           disableAutoPan={disableAutoPan || undefined}
           zIndex={50}
         >
-          <BusinessInfoWindow business={activeBusiness} onClose={onInfoWindowClose} />
+          <BusinessInfoWindow business={activeBusiness} />
         </InfoWindow>
       )}
     </>
