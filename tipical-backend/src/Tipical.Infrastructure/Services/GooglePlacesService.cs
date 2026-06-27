@@ -10,24 +10,24 @@ public class GooglePlacesService : IGooglePlacesService
 {
     private static readonly CallSettings GetPlaceSettings =
         FieldMask.For<Place>()
-            .Include(p => new { p.Id, p.DisplayName, p.Location, p.Types_ })
+            .Include(p => new { p.Id, p.DisplayName, p.Location })
             .ToCallSettings();
 
     private static readonly CallSettings NearbySearchSettings =
         FieldMask.For<SearchNearbyResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.Location, p.Types_ })
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.Location })
             .ToCallSettings();
 
     private static readonly CallSettings TextSearchSettings =
         FieldMask.For<SearchTextResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.Location, p.Types_ })
+            .ThenInclude(p => new { p.Id, p.DisplayName, p.Location })
             .ToCallSettings();
 
     private static readonly CallSettings DetailPlaceSettings =
         FieldMask.For<Place>()
-            .Include(p => new { p.FormattedAddress, p.InternationalPhoneNumber, p.WebsiteUri, p.Rating, p.UserRatingCount })
+            .Include(p => new { p.Rating, p.UserRatingCount })
             .Include(p => p.Photos)
             .ThenInclude(photo => photo.Name)
             .ToCallSettings();

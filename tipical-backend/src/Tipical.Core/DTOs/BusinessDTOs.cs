@@ -33,9 +33,6 @@ public class BusinessPinResponse
     /// <summary>Longitude of the business location.</summary>
     public decimal Longitude { get; set; }
 
-    /// <summary>Google Places type tags for this business (e.g. "restaurant", "cafe").</summary>
-    public List<string> PlaceTypes { get; set; } = [];
-
     /// <summary>The tip suggestion with the most reports, if any.</summary>
     public TippingPolicy? WinningPolicy { get; set; }
 
@@ -46,15 +43,6 @@ public class BusinessPinResponse
 /// <summary>Rich business detail fetched lazily when a pin is opened.</summary>
 public class BusinessDetailResponse
 {
-    /// <summary>Formatted street address.</summary>
-    public string? Address { get; set; }
-
-    /// <summary>Business phone number, if available.</summary>
-    public string? Phone { get; set; }
-
-    /// <summary>Business website URL, if available.</summary>
-    public string? Website { get; set; }
-
     /// <summary>Google Places rating (1.0–5.0), if available.</summary>
     public double? Rating { get; set; }
 

@@ -11,15 +11,11 @@ export interface Business {
   name: string;
   latitude: number;
   longitude: number;
-  placeTypes?: string[];
   winningPolicy?: TipSuggestion;
   winningPolicyVoteCount?: number;
 }
 
 export interface BusinessDetail {
-  address?: string;
-  phone?: string;
-  website?: string;
   rating?: number;
   reviewCount?: number;
   photos: string[];
