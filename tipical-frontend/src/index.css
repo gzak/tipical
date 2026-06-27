@@ -4,3 +4,13 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+@keyframes fade-out {
+  0% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(4px); }
+}
+
+@utility animate-fade-out {
+  animation: fade-out 3s ease-in-out forwards;
+}

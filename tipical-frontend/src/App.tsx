@@ -10,6 +10,7 @@ import { BusinessDetailPanel } from './components/business';
 import { UserProfile, GoogleAuthModal } from './components/auth';
 import { Loading } from './components/common';
 import { useUIStore } from './stores/uiStore';
+import { SuggestionBox } from './components/SuggestionBox';
 import type { Business } from './types';
 
 function accuracyToZoom(accuracy: number): number {
@@ -58,6 +59,7 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
 
       <BusinessDetailPanelWrapper />
       <GoogleAuthModal />
+      <SuggestionBox />
     </div>
   );
 }

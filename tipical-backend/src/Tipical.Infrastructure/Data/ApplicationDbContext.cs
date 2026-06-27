@@ -8,6 +8,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<AllowedUser> AllowedUsers { get; set; }
     public DbSet<Business> Businesses { get; set; }
     public DbSet<TippingVote> TippingVotes { get; set; }
+    public DbSet<Suggestion> Suggestions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
