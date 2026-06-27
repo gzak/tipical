@@ -8,10 +8,9 @@ import { POLICY_LABELS, POLICY_BADGE_STYLES } from '../../utils/policy';
 
 interface BusinessInfoWindowProps {
   business: Business;
-  onClose: () => void;
 }
 
-export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProps) {
+export function BusinessInfoWindow({ business }: BusinessInfoWindowProps) {
   const openBusinessPanel = useUIStore(s => s.openBusinessPanel);
   const setShowAuthModal = useUIStore(s => s.setShowAuthModal);
   const isAuthenticated = useAuthStore(s => !!s.token);
@@ -21,7 +20,6 @@ export function BusinessInfoWindow({ business, onClose }: BusinessInfoWindowProp
   const photos = detail?.photos ?? [];
 
   const handleCTA = () => {
-    onClose();
     if (isAuthenticated) {
       openBusinessPanel(business);
     } else {
