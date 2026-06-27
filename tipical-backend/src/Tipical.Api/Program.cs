@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Tipical.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Reflection;
 using System.Text;
+using System.Threading.RateLimiting;
 using Tipical.Core.Repositories;
 using Tipical.Core.Services;
 using Tipical.Core.Models;
@@ -81,6 +83,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("suggestions", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 builder.Services.Configure<AllowedUsersOptions>(builder.Configuration.GetSection("AllowedUsers"));
 
 // Configure CORS
@@ -99,12 +113,14 @@ builder.Services.AddCors(options =>
 // Register repositories
 builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
 builder.Services.AddScoped<ITippingVoteRepository, TippingVoteRepository>();
+builder.Services.AddScoped<ISuggestionRepository, SuggestionRepository>();
 
 // Register services
 builder.Services.AddScoped<IGooglePlacesService, GooglePlacesService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IBusinessService, BusinessService>();
 builder.Services.AddScoped<ITippingService, TippingService>();
+builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 
 var app = builder.Build();
 
@@ -128,6 +144,7 @@ app.UseExceptionHandler(errorApp =>
 
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
