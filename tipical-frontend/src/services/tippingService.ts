@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiClient } from './api';
 import type { TipReport, TipReportsAggregate, TipReportRequest } from '../types';
 
@@ -11,8 +12,8 @@ export const tippingService = {
     try {
       const response = await apiClient.get<TipReport>(`/tipping/votes/${googlePlaceId}/user`);
       return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
         return null;
       }
       throw error;

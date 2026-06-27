@@ -34,6 +34,7 @@ function FitBoundsController({ businesses }: { businesses: Business[] }) {
   const syncButtonBase = useSearchStore(s => s.syncButtonBase);
 
   const fitBoundsRef = useRef(fitBoundsOnResults);
+  // eslint-disable-next-line react-hooks/refs
   fitBoundsRef.current = fitBoundsOnResults;
 
   useEffect(() => {
@@ -70,6 +71,7 @@ function AutocompletePanController({ businesses }: { businesses: Business[] }) {
   const syncButtonBase = useSearchStore(s => s.syncButtonBase);
 
   const fitBoundsRef = useRef(fitBoundsOnResults);
+  // eslint-disable-next-line react-hooks/refs
   fitBoundsRef.current = fitBoundsOnResults;
 
   useEffect(() => {
@@ -207,6 +209,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
 
   useEffect(() => {
     setActiveMarkerId(placeId ?? null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAutocompleteOpen(!!placeId);
     if (!placeId) closeBusinessPanel();
   }, [placeId, setActiveMarkerId, closeBusinessPanel]);
@@ -216,6 +219,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
   useEffect(() => {
     if (placeId && fitBoundsOnResults) {
       setActiveMarkerId(placeId);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAutocompleteOpen(true);
     }
   }, [placeId, fitBoundsOnResults, setActiveMarkerId]);

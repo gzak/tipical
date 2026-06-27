@@ -10,6 +10,7 @@ const PIN_CX = PIN_WIDTH / 2; // horizontal center and circle head radius
 // vis.gl InfoWindow pixelOffset is a [x, y] tuple (it constructs google.maps.Size internally).
 // Negative y moves the stem tip upward. PIN_HEIGHT brings the tip to the SVG top edge;
 // the extra 2px accounts for the active stroke (2.5px) extending ~1.25px above that edge.
+// eslint-disable-next-line react-refresh/only-export-components
 export const INFO_WINDOW_OFFSET: [number, number] = [0, -(PIN_HEIGHT + 2)];
 
 // Teardrop path derived from PIN_WIDTH/PIN_HEIGHT: circle head of radius PIN_CX at top,

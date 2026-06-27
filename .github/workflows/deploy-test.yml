@@ -120,16 +120,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: tipical-frontend/package.json
+
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         working-directory: tipical-frontend
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
         working-directory: tipical-frontend
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
