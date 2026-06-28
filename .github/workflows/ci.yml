@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore
+        run: dotnet restore tipical-backend/Tipical.sln
+
+      - name: Build
+        run: dotnet build tipical-backend/Tipical.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet run --project tipical-backend/tests/Tipical.Infrastructure.Tests/Tipical.Infrastructure.Tests.csproj -c Release --no-build
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: tipical-frontend/package.json
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: tipical-frontend
+
+      - name: Lint
+        run: pnpm run lint
+        working-directory: tipical-frontend
+
+      - name: Build
+        run: pnpm run build
+        working-directory: tipical-frontend
+        env:
+          VITE_API_BASE_URL: ''
+          VITE_GOOGLE_MAPS_API_KEY: ''
+          VITE_GOOGLE_MAPS_MAP_ID: ''
+          VITE_GOOGLE_OAUTH_CLIENT_ID: ''

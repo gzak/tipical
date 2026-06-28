@@ -35,6 +35,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
     if (!requested) return;
 
     if (!navigator.geolocation) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState(prev => ({ ...prev, isLoading: false }));
       return;
     }

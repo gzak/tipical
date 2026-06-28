@@ -1,22 +1,25 @@
 # Build stage
 FROM node:22-alpine AS build
+RUN corepack enable
 WORKDIR /app
 
 # Install dependencies
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # Copy source and build
 # VITE_* env vars must be passed as --build-arg and set as ARG/ENV below
 ARG VITE_API_BASE_URL
 ARG VITE_GOOGLE_MAPS_API_KEY
+ARG VITE_GOOGLE_MAPS_MAP_ID
 ARG VITE_GOOGLE_OAUTH_CLIENT_ID
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
+ENV VITE_GOOGLE_MAPS_MAP_ID=$VITE_GOOGLE_MAPS_MAP_ID
 ENV VITE_GOOGLE_OAUTH_CLIENT_ID=$VITE_GOOGLE_OAUTH_CLIENT_ID
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Runtime stage
 FROM nginx:1.27-alpine AS final

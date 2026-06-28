@@ -86,6 +86,7 @@ export function SearchBar() {
   // When inputValue is cleared externally (e.g. info window ✕), clean up local autocomplete state.
   useEffect(() => {
     if (!inputValue) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       setActiveIndex(-1);
       resetSession();

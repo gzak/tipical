@@ -26,6 +26,7 @@ function BusinessDetailPanelWrapper() {
   const selectedBusiness = useUIStore(s => s.selectedBusiness);
   const [displayBusiness, setDisplayBusiness] = useState<Business | null>(selectedBusiness);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (selectedBusiness) setDisplayBusiness(selectedBusiness);
   }, [selectedBusiness]);
 
