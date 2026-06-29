@@ -42,24 +42,20 @@ jobs:
         run: echo "image=us-central1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/tipical/api:${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
       - name: Confirm image exists in Artifact Registry
-        id: ar_check
-        run: |
-          DIGEST=$(gcloud artifacts docker images describe "${{ steps.meta.outputs.image }}" \
-            --format 'value(image_summary.digest)' --quiet)
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+        run: gcloud artifacts docker images describe "${{ steps.meta.outputs.image }}" --quiet
 
       - name: Confirm image is deployed on test
         env:
-          EXPECTED_DIGEST: ${{ steps.ar_check.outputs.digest }}
+          EXPECTED_IMAGE: ${{ steps.meta.outputs.image }}
         run: |
           DEPLOYED=$(gcloud run services describe tipical-api-test \
             --region ${{ env.REGION }} \
             --format 'value(spec.template.spec.containers[0].image)')
-          if [[ "$DEPLOYED" != *"$EXPECTED_DIGEST"* ]]; then
-            echo "Deployed image does not match expected (deployed: $DEPLOYED, expected digest: $EXPECTED_DIGEST)"
+          if [ "$DEPLOYED" != "$EXPECTED_IMAGE" ]; then
+            echo "Deployed image does not match expected (deployed: $DEPLOYED, expected: $EXPECTED_IMAGE)"
             exit 1
           fi
-          echo "Confirmed: $EXPECTED_DIGEST is deployed on tipical-api-test"
+          echo "Confirmed: $EXPECTED_IMAGE is deployed on tipical-api-test"
 
   run-migrations-prod:
     name: Run Migrations (Prod)
