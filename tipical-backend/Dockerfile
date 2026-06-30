@@ -7,6 +7,7 @@ WORKDIR /src
 # expansion on Linux fails with DirectoryNotFoundException if they're absent,
 # falling back to treating **/*.resx / **/*.cs as literal paths (MSB3552 / CS2001).
 COPY .config/ .config/
+COPY Directory.Packages.props .
 COPY src/Tipical.Api/Tipical.Api.csproj src/Tipical.Api/
 COPY src/Tipical.Core/Tipical.Core.csproj src/Tipical.Core/
 COPY src/Tipical.Infrastructure/Tipical.Infrastructure.csproj src/Tipical.Infrastructure/
