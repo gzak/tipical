@@ -26,7 +26,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Tipical API",
+        Title = "TipScape API",
         Version = "v1",
         Description = "Crowd-sourced tipping policy data for local businesses."
     });

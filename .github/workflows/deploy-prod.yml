@@ -110,7 +110,7 @@ jobs:
             --region ${{ env.REGION }} \
             --add-cloudsql-instances ${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-prod \
             --set-secrets "ConnectionStrings__DefaultConnection=prod-db-connection-string:latest,GooglePlaces__ApiKey=prod-google-places-api-key:latest,GoogleOAuth__ClientId=prod-google-oauth-client-id:latest,JwtSettings__Secret=prod-jwt-secret:latest" \
-            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|Cors__AllowedOrigins__0=https://tipical.web.app|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}" \
+            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|Cors__AllowedOrigins__0=https://tipscape.app|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}" \
             --service-account tipical-api-prod@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --quiet
