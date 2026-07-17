@@ -5,7 +5,7 @@ import { useSearchStore } from '../../stores/searchStore';
 import { useGeolocation } from '../../hooks';
 import type { Business } from '../../types';
 import { BusinessMarker, INFO_WINDOW_OFFSET } from './BusinessMarker';
-import { BusinessInfoWindow } from './BusinessInfoWindow';
+import { BusinessInfoWindow, INFO_WINDOW_MAX_WIDTH_PX } from './BusinessInfoWindow';
 import { SearchThisAreaButton } from './SearchThisAreaButton';
 
 const MAP_CONTAINER_STYLE: React.CSSProperties = { width: '100%', height: '100%' };
@@ -130,6 +130,15 @@ const MapMarkers = memo(function MapMarkers({ businesses, activeMarkerId, disabl
     ? businesses.find(b => b.googlePlaceId === activeMarkerId) ?? null
     : null;
 
+  // Google computes its own default InfoWindow max width from the map container's size, which
+  // varies by device and can be narrower than a fixed-width content card, causing Google's
+  // `overflow: auto` content wrapper to clip anything that doesn't fit (including the CTA
+  // button). `maxWidth` here is just our ceiling ask — Google may still render the bubble
+  // narrower than this on a tight mobile map. The content card in BusinessInfoWindow.tsx uses
+  // `w-full` rather than a fixed px width specifically so it always exactly fills whatever box
+  // Google actually renders, instead of the two needing to independently compute the same
+  // pixel value (which doesn't hold across devices).
+
   return (
     <>
       {businesses.map(business => (
@@ -144,11 +153,12 @@ const MapMarkers = memo(function MapMarkers({ businesses, activeMarkerId, disabl
         <InfoWindow
           position={{ lat: activeBusiness.latitude, lng: activeBusiness.longitude }}
           pixelOffset={INFO_WINDOW_OFFSET}
+          maxWidth={INFO_WINDOW_MAX_WIDTH_PX}
           onCloseClick={onInfoWindowClose}
           disableAutoPan={disableAutoPan || undefined}
           zIndex={50}
         >
-          <BusinessInfoWindow business={activeBusiness} />
+          <BusinessInfoWindow key={activeBusiness.googlePlaceId} business={activeBusiness} />
         </InfoWindow>
       )}
     </>
