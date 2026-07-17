@@ -256,6 +256,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
         defaultCenter={initialCenter}
         defaultZoom={initialZoom}
         style={MAP_CONTAINER_STYLE}
+        gestureHandling="greedy"
         streetViewControl={false}
         mapTypeControl={false}
         fullscreenControl={false}
