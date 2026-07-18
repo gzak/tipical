@@ -178,8 +178,12 @@ export function SearchBar() {
     }
   }, [suggestions, activeIndex, selectSuggestion]);
 
+  // 5.5rem (88px) reserves room for the TOP_RIGHT profile/sign-in control, which
+  // is always a fixed `w-10 h-10` circle (see UserProfile.tsx) with `m-2.5`
+  // margin on both sides (GoogleMap.tsx) — a 60px footprint. If that box's size
+  // or margin changes, this value needs to grow to match or the two can overlap.
   return (
-    <div ref={containerRef} className="relative w-full max-w-xl">
+    <div ref={containerRef} className="relative w-[calc(100vw-5.5rem)] max-w-xl">
       <form
         onSubmit={handleSubmit}
         className="flex items-center gap-2 bg-white rounded-xl shadow-lg px-4 py-2"
