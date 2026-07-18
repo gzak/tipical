@@ -21,7 +21,11 @@ export function BusinessDetailPanel({ business }: BusinessDetailPanelProps) {
   const { data: detail, isLoading: detailLoading } = useBusinessDetail(business.googlePlaceId, { enabled: showBusinessPanel });
 
   const photos = detail?.photos ?? [];
-  const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${business.googlePlaceId}`;
+  // Google's documented "universal URL" format (maps/search/?api=1&query=...&query_place_id=...)
+  // is guaranteed to auto-launch the native Google Maps app on iOS/Android when installed, with
+  // a plain link -- no custom scheme or JS navigation workaround needed. See:
+  // https://developers.google.com/maps/documentation/urls/get-started#search-examples
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.name)}&query_place_id=${business.googlePlaceId}`;
 
   const mapsLink = (
     <a
