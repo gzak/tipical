@@ -39,9 +39,9 @@ export const Sidebar = ({
   }, [isOpen, onClose]);
 
   const widthStyles = {
-    sm: 'w-80',
-    md: 'w-96',
-    lg: 'w-[32rem]',
+    sm: 'md:w-80',
+    md: 'md:w-96',
+    lg: 'md:w-[32rem]',
   };
 
   const positionStyles = {
@@ -67,7 +67,7 @@ export const Sidebar = ({
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 ${positionStyles[position]} h-full ${widthStyles[width]} bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${slideAnimation[position]} flex flex-col`}
+        className={`fixed top-0 ${positionStyles[position]} h-full w-full ${widthStyles[width]} bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${slideAnimation[position]} flex flex-col`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'sidebar-title' : undefined}
