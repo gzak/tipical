@@ -10,6 +10,36 @@ interface BusinessInfoWindowProps {
   business: Business;
 }
 
+interface CarouselNavButtonProps {
+  direction: 'prev' | 'next';
+  onClick: (e: React.MouseEvent) => void;
+}
+
+function CarouselNavButton({ direction, onClick }: CarouselNavButtonProps) {
+  const isPrev = direction === 'prev';
+  return (
+    <button
+      aria-label={isPrev ? 'Previous photo' : 'Next photo'}
+      onClick={onClick}
+      className={`absolute ${isPrev ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center`}
+    >
+      <span className="bg-black/40 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center leading-none">
+        {isPrev ? '‹' : '›'}
+      </span>
+    </button>
+  );
+}
+
+// This card is rendered inside a Google Maps <InfoWindow>, whose own content wrapper has
+// `overflow: auto` — anything wider than that wrapper gets clipped (e.g. the CTA button).
+// Google computes the wrapper's actual rendered width from `maxWidth` (passed on the
+// <InfoWindow> in GoogleMap.tsx) combined with the map container's own size, and can render it
+// narrower than the `maxWidth` we ask for on a tight mobile map. Rather than hardcoding a card
+// width and hoping it matches whatever Google decides (it doesn't reliably, across devices),
+// the card below uses `w-full` so it always exactly fills whatever width Google's wrapper
+// actually ends up with — this constant only caps how wide that request is in the first place.
+export const INFO_WINDOW_MAX_WIDTH_PX = 260;
+
 export function BusinessInfoWindow({ business }: BusinessInfoWindowProps) {
   const openBusinessPanel = useUIStore(s => s.openBusinessPanel);
   const setShowAuthModal = useUIStore(s => s.setShowAuthModal);
@@ -58,20 +88,8 @@ export function BusinessInfoWindow({ business }: BusinessInfoWindowProps) {
           />
           {photos.length > 1 && (
             <>
-              <button
-                aria-label="Previous photo"
-                onClick={prevPhoto}
-                className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center leading-none"
-              >
-                ‹
-              </button>
-              <button
-                aria-label="Next photo"
-                onClick={nextPhoto}
-                className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center leading-none"
-              >
-                ›
-              </button>
+              <CarouselNavButton direction="prev" onClick={prevPhoto} />
+              <CarouselNavButton direction="next" onClick={nextPhoto} />
               <span className="absolute bottom-1 right-1 bg-black/40 text-white text-xs rounded px-1">
                 {photoIndex + 1}/{photos.length}
               </span>
@@ -88,7 +106,7 @@ export function BusinessInfoWindow({ business }: BusinessInfoWindowProps) {
   };
 
   return (
-    <div className="w-[260px]">
+    <div className="w-full">
       {renderPhotoArea()}
 
       <div className="p-2">
