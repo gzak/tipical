@@ -19,7 +19,7 @@ export function SearchThisAreaButton({ center, zoom, isSearching = false }: Sear
     <button
       onClick={() => setSearchCenter({ latitude: center.lat, longitude: center.lng, zoom })}
       disabled={isSearching}
-      className="mx-3 mb-3 mt-16 md:mt-3 inline-flex items-center gap-2 bg-white text-gray-800 text-sm font-medium px-4 py-2 rounded-full shadow-md hover:bg-gray-50 disabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-80 transition-colors border border-gray-200"
+      className="mx-3 mb-3 mt-16 inline-flex items-center gap-2 bg-white text-gray-800 text-sm font-medium px-4 py-2 rounded-full shadow-md hover:bg-gray-50 disabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-80 transition-colors border border-gray-200"
     >
       {isSearching && (
         <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" aria-hidden="true" />

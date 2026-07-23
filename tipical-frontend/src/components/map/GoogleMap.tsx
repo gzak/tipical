@@ -22,10 +22,78 @@ interface GoogleMapProps {
 }
 
 const MAX_FIT_ZOOM = 17;
-// Pixels to shift the pin below viewport center so the InfoWindow above it is centered vertically.
-// InfoWindow sits ~274px above the pin tip (34px pixelOffset + ~240px content height).
-// Centering: half of 274 ≈ 137px; 120px gives a slightly below-center result which feels natural.
-const INFO_WINDOW_VERTICAL_OFFSET_PX = 120;
+
+// InfoWindow height: full visual stack from the pin's tip to the top of the bubble. Not just
+// "34px pixelOffset + ~240px content height" — that undercounts by missing (a) Google's own
+// InfoWindow chrome (the bubble reserves space at the top for its built-in close button, which
+// is Google's wrapper padding, not our content) and (b) the tail/pointer triangle between the
+// bubble and the pin. Measured directly from a real screenshot (using the photo area's fixed
+// h-28/112px as a calibration reference) rather than estimated from Tailwind classes, which
+// undercounted by roughly 60px. Drives the stack-centering floor below, and the dynamic offset
+// formula in getInfoWindowVerticalOffsetPx.
+const INFO_WINDOW_HEIGHT_PX = 340;
+
+// Minimum pixels to shift the pin below viewport center so the InfoWindow above it lands roughly
+// centered vertically. `panTo` centers the map on the PIN's coordinates, but the InfoWindow only
+// extends upward from the pin, so without any offset the pin+InfoWindow "stack" ends up well above
+// true center. Shifting the pin down by ~half the InfoWindow's height is what centers the STACK
+// (not just the bare pin). Derived from INFO_WINDOW_HEIGHT_PX, rather than an independently
+// hardcoded number, so the two values can't drift out of sync. This is a *floor* — confirmed
+// working (170px) on tall/desktop viewports, where it's the value actually used. On short
+// viewports it isn't enough on its own to also clear the header (see getInfoWindowVerticalOffsetPx
+// below); it's also clamped down by BOTTOM_MARGIN_PX if the container is short enough that even
+// this floor would push the pin off-screen.
+const STACK_CENTERING_OFFSET_PX = Math.round(INFO_WINDOW_HEIGHT_PX / 2);
+
+// Reserved height (px) of the two-row header at the top of the map (search bar/avatar row +
+// "Search this area" button row). A static estimate rather than a live DOM measurement — the
+// button isn't always rendered (e.g. during the autocomplete flow, or before the search area has
+// changed), so a measurement would need this same static fallback anyway; using it unconditionally
+// keeps the mobile and desktop code paths identical instead of branching on DOM availability.
+const HEADER_HEIGHT_PX = 150;
+
+// Extra breathing room below the header once the InfoWindow clears it.
+const OFFSET_MARGIN_PX = 16;
+
+// Minimum breathing room (px) to leave below the pin once it's panned, so it's never placed flush
+// against (or past) the bottom edge of the map container.
+const BOTTOM_MARGIN_PX = 16;
+
+// Computes how many pixels to shift a pin below the map's true center when panning to it, so that
+// the InfoWindow rendered above the pin clears the reserved header space (search bar/avatar row +
+// "Search this area" button row) regardless of viewport height.
+//
+// After `map.panTo`/`setCenter` with a `lat` offset worth `offsetPx` px, the pin ends up
+// approximately `offsetPx` px below the new viewport center on screen (shifting the center north
+// leaves the pin, which stays put, further south i.e. lower on screen). So:
+//   pin_screen_y ≈ containerHeight / 2 + offsetPx
+// For the InfoWindow above the pin to clear the header:
+//   pin_screen_y - INFO_WINDOW_HEIGHT_PX >= HEADER_HEIGHT_PX + OFFSET_MARGIN_PX
+// Rearranged:
+//   offsetPx >= HEADER_HEIGHT_PX + INFO_WINDOW_HEIGHT_PX + OFFSET_MARGIN_PX - containerHeight / 2
+//
+// On short (mobile) viewports containerHeight/2 is small, so the required offset grows well past
+// the STACK_CENTERING_OFFSET_PX floor. That growth has no upper bound on its own — on a
+// sufficiently short viewport (e.g. a phone in landscape) the desired offset can exceed
+// containerHeight/2, which would push the pin below the bottom edge of the map entirely. The
+// result is clamped so pin_screen_y never exceeds containerHeight - BOTTOM_MARGIN_PX: the pin may
+// not fully clear the header on very short viewports, but it always stays on-screen, which is a
+// better failure mode than panning it out of view.
+function getInfoWindowVerticalOffsetPx(map: google.maps.Map): number {
+  const containerHeight = map.getDiv().clientHeight;
+  const requiredOffset = HEADER_HEIGHT_PX + INFO_WINDOW_HEIGHT_PX + OFFSET_MARGIN_PX - containerHeight / 2;
+  const desiredOffset = Math.max(STACK_CENTERING_OFFSET_PX, requiredOffset);
+  const maxOffsetPx = Math.max(0, containerHeight / 2 - BOTTOM_MARGIN_PX);
+  return Math.min(desiredOffset, maxOffsetPx);
+}
+
+// Degrees of latitude per pixel at the given zoom, for converting a desired screen-pixel vertical
+// offset into a `panTo`/`setCenter` latitude delta. Standard Web Mercator "degrees per pixel"
+// resolution (`360 / (256 * 2^zoom)`), scaled by `cos(latitude)` for the projection's local
+// vertical stretch away from the equator.
+function latDegreesPerPixel(zoom: number, latitude: number): number {
+  return 360 / (256 * Math.pow(2, zoom)) * Math.cos(latitude * Math.PI / 180);
+}
 
 function FitBoundsController({ businesses }: { businesses: Business[] }) {
   const map = useMap();
@@ -64,6 +132,13 @@ function FitBoundsController({ businesses }: { businesses: Business[] }) {
 
 // Only rendered when placeId is set, so it implicitly knows it's in autocomplete mode —
 // no need to pass or track placeId as a dep.
+//
+// Only `lat` gets a deliberate offset (to clear the header) — `lng` is always passed through as
+// the pin's own exact longitude, unmodified. `panTo`/`setCenter` set an *absolute* new center, so
+// passing the pin's own longitude guarantees the pin lands exactly horizontally centered on
+// screen after every pan, regardless of where it started — no separate horizontal offset
+// calculation is needed as long as the viewport is wider than INFO_WINDOW_MAX_WIDTH_PX (any real
+// device).
 function AutocompletePanController({ businesses }: { businesses: Business[] }) {
   const map = useMap();
   const fitBoundsOnResults = useSearchStore(s => s.fitBoundsOnResults);
@@ -79,8 +154,8 @@ function AutocompletePanController({ businesses }: { businesses: Business[] }) {
     clearFitBounds();
 
     const { latitude, longitude } = businesses[0];
-    const latDegreesPerPixel = 360 / (256 * Math.pow(2, MAX_FIT_ZOOM)) * Math.cos(latitude * Math.PI / 180);
-    const offsetTarget = { lat: latitude + INFO_WINDOW_VERTICAL_OFFSET_PX * latDegreesPerPixel, lng: longitude };
+    const offsetPx = getInfoWindowVerticalOffsetPx(map);
+    const offsetTarget = { lat: latitude + offsetPx * latDegreesPerPixel(MAX_FIT_ZOOM, latitude), lng: longitude };
 
     if (map.getZoom() === MAX_FIT_ZOOM) {
       map.panTo(offsetTarget);
@@ -96,6 +171,32 @@ function AutocompletePanController({ businesses }: { businesses: Business[] }) {
 
     return () => listener.remove();
   }, [businesses, map, clearFitBounds, syncButtonBase]);
+
+  return null;
+}
+
+// Pans so a marker's InfoWindow (which opens above the pin) isn't left hidden behind the
+// TOP_CENTER/TOP_LEFT/TOP_RIGHT MapControls, mirroring what AutocompletePanController already
+// does for the single-autocomplete-result flow. Unlike that controller this doesn't force
+// MAX_FIT_ZOOM — a marker click shouldn't change the user's current zoom level, just recenter
+// around it. Pass `null` for activeMarkerId (e.g. while the autocomplete flow owns panning) to
+// no-op.
+function MarkerPanController({ activeMarkerId, businesses }: { activeMarkerId: string | null; businesses: Business[] }) {
+  const map = useMap();
+  const businessesRef = useRef(businesses);
+  // eslint-disable-next-line react-hooks/refs
+  businessesRef.current = businesses;
+
+  useEffect(() => {
+    if (!map || !activeMarkerId) return;
+    const business = businessesRef.current.find(b => b.googlePlaceId === activeMarkerId);
+    if (!business) return;
+
+    const zoom = map.getZoom();
+    if (zoom === undefined) return;
+    const offsetPx = getInfoWindowVerticalOffsetPx(map);
+    map.panTo({ lat: business.latitude + offsetPx * latDegreesPerPixel(zoom, business.latitude), lng: business.longitude });
+  }, [map, activeMarkerId]);
 
   return null;
 }
@@ -120,12 +221,11 @@ function UserLocationMarker({ latitude, longitude }: { latitude: number; longitu
 interface MapMarkersProps {
   businesses: Business[];
   activeMarkerId: string | null;
-  disableAutoPan: boolean;
   onMarkerClick: (id: string) => void;
   onInfoWindowClose: () => void;
 }
 
-const MapMarkers = memo(function MapMarkers({ businesses, activeMarkerId, disableAutoPan, onMarkerClick, onInfoWindowClose }: MapMarkersProps) {
+const MapMarkers = memo(function MapMarkers({ businesses, activeMarkerId, onMarkerClick, onInfoWindowClose }: MapMarkersProps) {
   const activeBusiness = activeMarkerId
     ? businesses.find(b => b.googlePlaceId === activeMarkerId) ?? null
     : null;
@@ -138,6 +238,14 @@ const MapMarkers = memo(function MapMarkers({ businesses, activeMarkerId, disabl
   // `w-full` rather than a fixed px width specifically so it always exactly fills whatever box
   // Google actually renders, instead of the two needing to independently compute the same
   // pixel value (which doesn't hold across devices).
+  //
+  // `minWidth` is set to the same value so Google's wrapper is a fixed 260px from the very first
+  // paint, rather than shrink-wrapping to fit whatever content happens to be loaded yet. Without
+  // it, the bubble would render narrow while BusinessInfoWindow's async photo/detail fetch is
+  // still loading (nothing in the loading-skeleton state has an intrinsic width near 260px), then
+  // visibly "pop" wider once the real content arrives. Pinning min=max eliminates that content-
+  // dependent sizing pass entirely — `w-full` still fills whatever Google renders, so this
+  // doesn't reintroduce the narrow-map clipping risk the paragraph above describes.
 
   return (
     <>
@@ -153,9 +261,10 @@ const MapMarkers = memo(function MapMarkers({ businesses, activeMarkerId, disabl
         <InfoWindow
           position={{ lat: activeBusiness.latitude, lng: activeBusiness.longitude }}
           pixelOffset={INFO_WINDOW_OFFSET}
+          minWidth={INFO_WINDOW_MAX_WIDTH_PX}
           maxWidth={INFO_WINDOW_MAX_WIDTH_PX}
           onCloseClick={onInfoWindowClose}
-          disableAutoPan={disableAutoPan || undefined}
+          disableAutoPan
           zIndex={50}
         >
           <BusinessInfoWindow key={activeBusiness.googlePlaceId} business={activeBusiness} />
@@ -287,6 +396,7 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
           ? <AutocompletePanController businesses={businesses} />
           : <FitBoundsController businesses={businesses} />
         }
+        <MarkerPanController activeMarkerId={autocompleteOpen ? null : activeMarkerId} businesses={businesses} />
         {latitude !== null && longitude !== null && (
           <>
             <MapPanner latitude={latitude} longitude={longitude} />
@@ -297,7 +407,6 @@ export function GoogleMap({ businesses = [], isSearching = false, initialCenter,
           <MapMarkers
             businesses={businesses}
             activeMarkerId={activeMarkerId}
-            disableAutoPan={autocompleteOpen}
             onMarkerClick={handleMarkerClick}
             onInfoWindowClose={handleInfoWindowClose}
           />
