@@ -4,6 +4,7 @@ using Tipical.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Serilog;
 using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -14,7 +15,25 @@ using Tipical.Infrastructure.Data;
 using Tipical.Infrastructure.Repositories;
 using Tipical.Infrastructure.Services;
 
+// Bootstrap logger: captures anything logged before the host (and its
+// configuration-driven Serilog setup) is built. Replaced by the configured
+// logger once the host is up.
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+try
+{
+    Log.Information("Starting Tipical API");
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog from appsettings (Console locally, Google Cloud Logging in
+// the deployed Production environment). ReadFrom.Services lets registered
+// enrichers/sinks participate in the pipeline.
+builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfiguration
+    .ReadFrom.Configuration(builder.Configuration)
+    .ReadFrom.Services(services));
 
 // Add services to the container
 builder.Services.AddControllers()
@@ -131,6 +150,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Emit a single structured log entry per HTTP request (method, path, status,
+// elapsed time) instead of the framework's noisy multi-line default.
+app.UseSerilogRequestLogging();
+
 // Global exception handling
 app.UseExceptionHandler(errorApp =>
 {
@@ -149,4 +172,16 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run();
+    app.Run();
+}
+// HostAbortedException is thrown intentionally by EF Core design-time tools
+// (e.g. `dotnet ef migrations`/`database update`) to stop before app.Run();
+// it isn't a real failure, so don't log it as fatal.
+catch (Exception ex) when (ex is not HostAbortedException)
+{
+    Log.Fatal(ex, "Tipical API terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
