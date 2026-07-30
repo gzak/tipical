@@ -4,6 +4,10 @@ using Tipical.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Npgsql;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using System.Reflection;
 using System.Text;
@@ -34,6 +38,34 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfiguration
     .ReadFrom.Configuration(builder.Configuration)
     .ReadFrom.Services(services));
+
+// Configure OpenTelemetry tracing: console exporter locally, OTLP to Cloud Trace in
+// the deployed Production environment (see OpenTelemetry:Otlp:Endpoint in appsettings).
+var otlpEndpoint = builder.Configuration["OpenTelemetry:Otlp:Endpoint"];
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(
+        serviceName: builder.Configuration["OpenTelemetry:ServiceName"] ?? "tipical-api",
+        serviceVersion: builder.Configuration["OpenTelemetry:ServiceVersion"]))
+    .WithTracing(tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddNpgsql();
+
+        if (string.IsNullOrEmpty(otlpEndpoint))
+        {
+            tracing.AddConsoleExporter();
+        }
+        else
+        {
+            tracing.AddOtlpExporter(otlp =>
+            {
+                otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
+                otlp.Endpoint = new Uri(otlpEndpoint);
+                otlp.HttpClientFactory = GoogleCloudTraceHttpClient.Create;
+            });
+        }
+    });
 
 // Add services to the container
 builder.Services.AddControllers()
