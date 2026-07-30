@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Routing;
 using Tipical.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -184,7 +185,19 @@ if (app.Environment.IsDevelopment())
 
 // Emit a single structured log entry per HTTP request (method, path, status,
 // elapsed time) instead of the framework's noisy multi-line default.
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options =>
+{
+    // Attach the matched route template (e.g. "api/venues/{id}") alongside the
+    // raw request path, so logs can be grouped/aggregated by endpoint instead
+    // of fragmenting by every distinct path segment value.
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        if (httpContext.GetEndpoint() is RouteEndpoint routeEndpoint)
+        {
+            diagnosticContext.Set("RouteTemplate", routeEndpoint.RoutePattern.RawText);
+        }
+    };
+});
 
 // Global exception handling
 app.UseExceptionHandler(errorApp =>
