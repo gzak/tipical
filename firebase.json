@@ -10,6 +10,13 @@
       ],
       "rewrites": [
         {
+          "source": "/api/**",
+          "run": {
+            "serviceId": "tipical-api-test",
+            "region": "us-central1"
+          }
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -44,6 +51,13 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+        {
+          "source": "/api/**",
+          "run": {
+            "serviceId": "tipical-api-prod",
+            "region": "us-central1"
+          }
+        },
         {
           "source": "**",
           "destination": "/index.html"
