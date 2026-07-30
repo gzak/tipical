@@ -109,6 +109,7 @@ jobs:
             --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}|Serilog__WriteTo__0__Name=GoogleCloudLogging|Serilog__WriteTo__0__Args__projectId=${{ vars.GCP_PROJECT_ID }}|Serilog__WriteTo__0__Args__serviceName=tipical-api-test|Serilog__WriteTo__0__Args__serviceVersion=${{ github.sha }}|OpenTelemetry__ServiceName=tipical-api-test|OpenTelemetry__ServiceVersion=${{ github.sha }}|OpenTelemetry__Otlp__Endpoint=https://telemetry.googleapis.com/v1/traces" \
             --service-account tipical-api-test@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --allow-unauthenticated \
+            --no-cpu-throttling \
             --quiet
 
           URL=$(gcloud run services describe tipical-api-test \
