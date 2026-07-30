@@ -112,7 +112,7 @@ jobs:
             --region ${{ env.REGION }} \
             --add-cloudsql-instances ${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-prod \
             --set-secrets "ConnectionStrings__DefaultConnection=prod-db-connection-string:latest,GooglePlaces__ApiKey=prod-google-places-api-key:latest,GoogleOAuth__ClientId=prod-google-oauth-client-id:latest,JwtSettings__Secret=prod-jwt-secret:latest" \
-            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|Cors__AllowedOrigins__0=https://tipscape.app|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}|Serilog__WriteTo__0__Name=GoogleCloudLogging|Serilog__WriteTo__0__Args__projectId=${{ vars.GCP_PROJECT_ID }}|Serilog__WriteTo__0__Args__serviceName=tipical-api-prod|Serilog__WriteTo__0__Args__serviceVersion=${IMAGE_TAG}" \
+            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}|Serilog__WriteTo__0__Name=GoogleCloudLogging|Serilog__WriteTo__0__Args__projectId=${{ vars.GCP_PROJECT_ID }}|Serilog__WriteTo__0__Args__serviceName=tipical-api-prod|Serilog__WriteTo__0__Args__serviceVersion=${IMAGE_TAG}" \
             --service-account tipical-api-prod@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --quiet
@@ -148,7 +148,6 @@ jobs:
         run: pnpm run build
         working-directory: tipical-frontend
         env:
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_GOOGLE_MAPS_API_KEY: ${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
           VITE_GOOGLE_MAPS_MAP_ID: ${{ vars.VITE_GOOGLE_MAPS_MAP_ID }}
           VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ vars.VITE_GOOGLE_OAUTH_CLIENT_ID }}
