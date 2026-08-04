@@ -49,10 +49,10 @@ builder.Services.AddOpenTelemetry()
             serviceName: builder.Configuration["OpenTelemetry:ServiceName"] ?? "tipical-api",
             serviceVersion: builder.Configuration["OpenTelemetry:ServiceVersion"]);
 
-        // Cloud Trace's OTLP endpoint requires this to attribute traces to a project.
-        var gcpProjectId = builder.Configuration["OpenTelemetry:GcpProjectId"];
-        if (!string.IsNullOrEmpty(gcpProjectId))
+        if (!string.IsNullOrEmpty(otlpEndpoint))
         {
+            var gcpProjectId = builder.Configuration["OpenTelemetry:GcpProjectId"]
+                ?? throw new InvalidOperationException("GCP project ID not configured");
             resource.AddAttributes([new KeyValuePair<string, object>("gcp.project_id", gcpProjectId)]);
         }
     })
