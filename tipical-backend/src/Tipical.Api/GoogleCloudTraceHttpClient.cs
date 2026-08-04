@@ -17,10 +17,6 @@ internal static class GoogleCloudTraceHttpClient
 
     public static HttpClient Create() => new(new AuthenticatingHandler());
 
-    // The OTLP exporter sends requests synchronously via HttpClient.Send() rather than
-    // SendAsync() (its own export path is synchronous, so it avoids sync-over-async by
-    // using the real synchronous API) - overriding only SendAsync here means this
-    // handler is silently skipped, so both need to be overridden.
     private sealed class AuthenticatingHandler() : DelegatingHandler(new HttpClientHandler())
     {
         protected override async Task<HttpResponseMessage> SendAsync(
@@ -31,6 +27,7 @@ internal static class GoogleCloudTraceHttpClient
             return await base.SendAsync(request, cancellationToken);
         }
 
+        // The OTLP exporter sends requests via this synchronous method, not SendAsync.
         protected override HttpResponseMessage Send(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
