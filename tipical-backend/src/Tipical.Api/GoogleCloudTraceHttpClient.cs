@@ -22,10 +22,24 @@ internal static class GoogleCloudTraceHttpClient
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var credential = await Credential.Value;
-            var token = await ((ITokenAccess)credential).GetAccessTokenForRequestAsync(cancellationToken: cancellationToken);
+            var token = await GetAccessTokenAsync(cancellationToken);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             return await base.SendAsync(request, cancellationToken);
+        }
+
+        // The OTLP exporter sends requests via this synchronous method, not SendAsync.
+        protected override HttpResponseMessage Send(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var token = GetAccessTokenAsync(cancellationToken).GetAwaiter().GetResult();
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return base.Send(request, cancellationToken);
+        }
+
+        private static async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
+        {
+            var credential = await Credential.Value;
+            return await ((ITokenAccess)credential).GetAccessTokenForRequestAsync(cancellationToken: cancellationToken);
         }
     }
 }
