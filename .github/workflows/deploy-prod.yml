@@ -112,7 +112,7 @@ jobs:
             --region ${{ env.REGION }} \
             --add-cloudsql-instances ${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:tipical-db-prod \
             --set-secrets "ConnectionStrings__DefaultConnection=prod-db-connection-string:latest,GooglePlaces__ApiKey=prod-google-places-api-key:latest,GoogleOAuth__ClientId=prod-google-oauth-client-id:latest,JwtSettings__Secret=prod-jwt-secret:latest" \
-            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}|Serilog__WriteTo__0__Name=GoogleCloudLogging|Serilog__WriteTo__0__Args__projectId=${{ vars.GCP_PROJECT_ID }}|Serilog__WriteTo__0__Args__serviceName=tipical-api-prod|Serilog__WriteTo__0__Args__serviceVersion=${IMAGE_TAG}|OpenTelemetry__ServiceName=tipical-api-prod|OpenTelemetry__ServiceVersion=${IMAGE_TAG}|OpenTelemetry__Otlp__Endpoint=https://telemetry.googleapis.com/v1/traces" \
+            --set-env-vars "^|^ASPNETCORE_ENVIRONMENT=Production|AllowedUsers__Enabled=${{ vars.ALLOWED_USERS_ENABLED }}|Serilog__WriteTo__0__Name=GoogleCloudLogging|Serilog__WriteTo__0__Args__projectId=${{ vars.GCP_PROJECT_ID }}|Serilog__WriteTo__0__Args__serviceName=tipical-api-prod|Serilog__WriteTo__0__Args__serviceVersion=${IMAGE_TAG}|OpenTelemetry__ServiceName=tipical-api-prod|OpenTelemetry__ServiceVersion=${IMAGE_TAG}|OpenTelemetry__GcpProjectId=${{ vars.GCP_PROJECT_ID }}|OpenTelemetry__Otlp__Endpoint=https://telemetry.googleapis.com/v1/traces" \
             --service-account tipical-api-prod@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --quiet

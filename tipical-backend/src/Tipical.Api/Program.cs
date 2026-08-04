@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Routing;
 using Tipical.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -44,9 +43,19 @@ builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfigurati
 // the deployed Production environment (see OpenTelemetry:Otlp:Endpoint in appsettings).
 var otlpEndpoint = builder.Configuration["OpenTelemetry:Otlp:Endpoint"];
 builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService(
-        serviceName: builder.Configuration["OpenTelemetry:ServiceName"] ?? "tipical-api",
-        serviceVersion: builder.Configuration["OpenTelemetry:ServiceVersion"]))
+    .ConfigureResource(resource =>
+    {
+        resource.AddService(
+            serviceName: builder.Configuration["OpenTelemetry:ServiceName"] ?? "tipical-api",
+            serviceVersion: builder.Configuration["OpenTelemetry:ServiceVersion"]);
+
+        // Cloud Trace's OTLP endpoint requires this to attribute traces to a project.
+        var gcpProjectId = builder.Configuration["OpenTelemetry:GcpProjectId"];
+        if (!string.IsNullOrEmpty(gcpProjectId))
+        {
+            resource.AddAttributes([new KeyValuePair<string, object>("gcp.project_id", gcpProjectId)]);
+        }
+    })
     .WithTracing(tracing =>
     {
         tracing.AddAspNetCoreInstrumentation()
