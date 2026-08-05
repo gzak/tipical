@@ -59,6 +59,7 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracing =>
     {
         tracing.AddAspNetCoreInstrumentation()
+            .AddGrpcClientInstrumentation()
             .AddHttpClientInstrumentation()
             .AddNpgsql();
 
