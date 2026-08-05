@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Npgsql;
+using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -74,6 +75,8 @@ builder.Services.AddOpenTelemetry()
                 otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
                 otlp.Endpoint = new Uri(otlpEndpoint);
                 otlp.HttpClientFactory = GoogleCloudTraceHttpClient.Create;
+                // TODO: deprecate as part of #227 (see Simple vs Batch tradeoff there)
+                otlp.ExportProcessorType = ExportProcessorType.Simple;
             });
         }
     });
@@ -207,21 +210,6 @@ app.UseSerilogRequestLogging(options =>
             diagnosticContext.Set("RouteTemplate", routeEndpoint.RoutePattern.RawText);
         }
     };
-});
-
-// TODO: deprecate as part of #227
-var tracerProvider = app.Services.GetRequiredService<TracerProvider>();
-app.Use(async (context, next) =>
-{
-    await next(context);
-    try
-    {
-        await Task.Run(() => tracerProvider.ForceFlush(5000));
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogWarning(ex, "Failed to force-flush OpenTelemetry traces");
-    }
 });
 
 // Global exception handling
