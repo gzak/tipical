@@ -24,7 +24,9 @@ internal static class GoogleCloudTraceHttpClient
         {
             var token = await GetAccessTokenAsync(cancellationToken);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            return await base.SendAsync(request, cancellationToken);
+            var response = await base.SendAsync(request, cancellationToken);
+            await LogResponseAsync(response, cancellationToken);
+            return response;
         }
 
         // The OTLP exporter sends requests via this synchronous method, not SendAsync.
@@ -33,7 +35,25 @@ internal static class GoogleCloudTraceHttpClient
         {
             var token = GetAccessTokenAsync(cancellationToken).GetAwaiter().GetResult();
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            return base.Send(request, cancellationToken);
+            var response = base.Send(request, cancellationToken);
+            LogResponseAsync(response, cancellationToken).GetAwaiter().GetResult();
+            return response;
+        }
+
+        // TEMPORARY DIAGNOSTIC (#227): the OTel SDK swallows export failures with no
+        // visibility into app logs; this surfaces the raw Cloud Trace response to find
+        // out why spans still aren't showing up. Remove once resolved.
+        private static async Task LogResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}");
+            }
+            else
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}: {body}");
+            }
         }
 
         private static async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
