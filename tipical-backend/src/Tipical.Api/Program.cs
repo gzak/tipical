@@ -209,6 +209,21 @@ app.UseSerilogRequestLogging(options =>
     };
 });
 
+// TODO: deprecate as part of #227
+var tracerProvider = app.Services.GetRequiredService<TracerProvider>();
+app.Use(async (context, next) =>
+{
+    await next(context);
+    try
+    {
+        await Task.Run(() => tracerProvider.ForceFlush(5000));
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Failed to force-flush OpenTelemetry traces");
+    }
+});
+
 // Global exception handling
 app.UseExceptionHandler(errorApp =>
 {
