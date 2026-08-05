@@ -45,15 +45,12 @@ internal static class GoogleCloudTraceHttpClient
         // out why spans still aren't showing up. Remove once resolved.
         private static async Task LogResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
         {
-            if (response.IsSuccessStatusCode)
-            {
-                Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}");
-            }
-            else
-            {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}: {body}");
-            }
+            // OTLP allows a 200 response that still rejects some/all spans via a
+            // partial_success field in the (protobuf) body, so read it either way —
+            // status code alone isn't enough to tell whether the export landed.
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            var raw = System.Text.Encoding.Latin1.GetString(bytes);
+            Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}, {bytes.Length} body bytes: {raw}");
         }
 
         private static async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
