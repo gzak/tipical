@@ -24,6 +24,7 @@ internal static class GoogleCloudTraceHttpClient
         {
             var token = await GetAccessTokenAsync(cancellationToken);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            await LogRequestAsync(request, cancellationToken);
             var response = await base.SendAsync(request, cancellationToken);
             await LogResponseAsync(response, cancellationToken);
             return response;
@@ -35,14 +36,29 @@ internal static class GoogleCloudTraceHttpClient
         {
             var token = GetAccessTokenAsync(cancellationToken).GetAwaiter().GetResult();
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            LogRequestAsync(request, cancellationToken).GetAwaiter().GetResult();
             var response = base.Send(request, cancellationToken);
             LogResponseAsync(response, cancellationToken).GetAwaiter().GetResult();
             return response;
         }
 
-        // TEMPORARY DIAGNOSTIC (#227): the OTel SDK swallows export failures with no
-        // visibility into app logs; this surfaces the raw Cloud Trace response to find
-        // out why spans still aren't showing up. Remove once resolved.
+        // TEMPORARY DIAGNOSTIC (#227): we've only ever verified the response, never
+        // what we actually send — if the payload is already empty/hollowed-out by the
+        // time it reaches here (e.g. from some context/object-reuse issue upstream),
+        // Cloud Trace would legitimately 200 an empty request and we'd never know.
+        // Remove once resolved.
+        private static async Task LogRequestAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.Content is null)
+            {
+                Console.Error.WriteLine("[OTLP export] request has no content");
+                return;
+            }
+
+            var bytes = await request.Content.ReadAsByteArrayAsync(cancellationToken);
+            Console.Error.WriteLine($"[OTLP export] sending {bytes.Length} request bytes");
+        }
+
         private static async Task LogResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
         {
             // OTLP allows a 200 response that still rejects some/all spans via a
