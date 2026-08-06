@@ -10,6 +10,7 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -75,8 +76,6 @@ builder.Services.AddOpenTelemetry()
                 otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
                 otlp.Endpoint = new Uri(otlpEndpoint);
                 otlp.HttpClientFactory = GoogleCloudTraceHttpClient.Create;
-                // TODO: deprecate as part of #227 (see Simple vs Batch tradeoff there)
-                otlp.ExportProcessorType = ExportProcessorType.Simple;
             });
         }
     });
@@ -212,6 +211,30 @@ app.UseSerilogRequestLogging(options =>
     };
 });
 
+// TODO: deprecate as part of #227
+// Flushes the OTLP batch exporter once per request, right when ASP.NET Core actually
+// stops the request's Activity (HttpRequestIn.Stop fires after the whole middleware
+// pipeline returns to the hosting layer — later than any app.Use() callback could hook
+// into), so the flush reliably includes this request's own spans, batched into one
+// export call instead of one call per span.
+var tracerProvider = app.Services.GetRequiredService<TracerProvider>();
+DiagnosticListener.AllListeners.Subscribe(new DelegateObserver<DiagnosticListener>(listener =>
+{
+    if (listener.Name != "Microsoft.AspNetCore") return;
+    listener.Subscribe(new DelegateObserver<KeyValuePair<string, object?>>(evt =>
+    {
+        if (evt.Key != "Microsoft.AspNetCore.Hosting.HttpRequestIn.Stop") return;
+        try
+        {
+            tracerProvider.ForceFlush(5000);
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Failed to force-flush OpenTelemetry traces");
+        }
+    }));
+}));
+
 // Global exception handling
 app.UseExceptionHandler(errorApp =>
 {
@@ -242,4 +265,12 @@ catch (Exception ex) when (ex is not HostAbortedException)
 finally
 {
     Log.CloseAndFlush();
+}
+
+// TODO: deprecate as part of #227
+file sealed class DelegateObserver<T>(Action<T> onNext) : IObserver<T>
+{
+    public void OnNext(T value) => onNext(value);
+    public void OnError(Exception error) { }
+    public void OnCompleted() { }
 }
