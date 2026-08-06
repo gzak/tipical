@@ -76,6 +76,10 @@ builder.Services.AddOpenTelemetry()
                 otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
                 otlp.Endpoint = new Uri(otlpEndpoint);
                 otlp.HttpClientFactory = GoogleCloudTraceHttpClient.Create;
+                // TODO: deprecate as part of #227 — re-testing Simple now that we can
+                // decode payloads, to see if it avoids the cross-request span
+                // scattering Batch's shared queue caused under concurrent load.
+                otlp.ExportProcessorType = ExportProcessorType.Simple;
             });
         }
     });
