@@ -1,5 +1,7 @@
 using System.Net.Http.Headers;
 using Google.Apis.Auth.OAuth2;
+using Google.Protobuf;
+using OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace Tipical.Api;
 
@@ -56,7 +58,16 @@ internal static class GoogleCloudTraceHttpClient
             }
 
             var bytes = await request.Content.ReadAsByteArrayAsync(cancellationToken);
-            Console.Error.WriteLine($"[OTLP export] sending {bytes.Length} request bytes");
+            try
+            {
+                var parsed = ExportTraceServiceRequest.Parser.ParseFrom(bytes);
+                var json = JsonFormatter.Default.Format(parsed);
+                Console.Error.WriteLine($"[OTLP export] sending {bytes.Length} request bytes: {json}");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[OTLP export] sending {bytes.Length} request bytes, failed to parse as ExportTraceServiceRequest: {ex.Message}");
+            }
         }
 
         private static async Task LogResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
@@ -65,8 +76,16 @@ internal static class GoogleCloudTraceHttpClient
             // partial_success field in the (protobuf) body, so read it either way —
             // status code alone isn't enough to tell whether the export landed.
             var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-            var raw = System.Text.Encoding.Latin1.GetString(bytes);
-            Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}, {bytes.Length} body bytes: {raw}");
+            try
+            {
+                var parsed = ExportTraceServiceResponse.Parser.ParseFrom(bytes);
+                var json = JsonFormatter.Default.Format(parsed);
+                Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}, {bytes.Length} body bytes: {json}");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}, {bytes.Length} body bytes, failed to parse as ExportTraceServiceResponse: {ex.Message}");
+            }
         }
 
         private static async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)

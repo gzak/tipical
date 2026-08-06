@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
@@ -36,6 +41,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tipical.Infrastructure\Tipical.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!-- TEMPORARY DIAGNOSTIC (#227): compiles the canonical OTLP proto schema so we can
+       deserialize outgoing export payloads and log them as JSON. Remove once resolved. -->
+  <ItemGroup>
+    <Protobuf Include="Otlp/**/*.proto" ProtoRoot="Otlp" GrpcServices="None" />
   </ItemGroup>
 
 </Project>
