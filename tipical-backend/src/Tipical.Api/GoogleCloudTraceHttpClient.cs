@@ -24,9 +24,7 @@ internal static class GoogleCloudTraceHttpClient
         {
             var token = await GetAccessTokenAsync(cancellationToken);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var response = await base.SendAsync(request, cancellationToken);
-            await LogResponseAsync(response, cancellationToken);
-            return response;
+            return await base.SendAsync(request, cancellationToken);
         }
 
         // The OTLP exporter sends requests via this synchronous method, not SendAsync.
@@ -35,22 +33,7 @@ internal static class GoogleCloudTraceHttpClient
         {
             var token = GetAccessTokenAsync(cancellationToken).GetAwaiter().GetResult();
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var response = base.Send(request, cancellationToken);
-            LogResponseAsync(response, cancellationToken).GetAwaiter().GetResult();
-            return response;
-        }
-
-        // TEMPORARY DIAGNOSTIC (#227): the OTel SDK swallows export failures with no
-        // visibility into app logs; this surfaces the raw Cloud Trace response to find
-        // out why spans still aren't showing up. Remove once resolved.
-        private static async Task LogResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
-        {
-            // OTLP allows a 200 response that still rejects some/all spans via a
-            // partial_success field in the (protobuf) body, so read it either way —
-            // status code alone isn't enough to tell whether the export landed.
-            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-            var raw = System.Text.Encoding.Latin1.GetString(bytes);
-            Console.Error.WriteLine($"[OTLP export] {(int)response.StatusCode} {response.StatusCode}, {bytes.Length} body bytes: {raw}");
+            return base.Send(request, cancellationToken);
         }
 
         private static async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)

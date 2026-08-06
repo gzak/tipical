@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Npgsql;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -75,8 +74,6 @@ builder.Services.AddOpenTelemetry()
                 otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
                 otlp.Endpoint = new Uri(otlpEndpoint);
                 otlp.HttpClientFactory = GoogleCloudTraceHttpClient.Create;
-                // TODO: deprecate as part of #227 (see Simple vs Batch tradeoff there)
-                otlp.ExportProcessorType = ExportProcessorType.Simple;
             });
         }
     });
