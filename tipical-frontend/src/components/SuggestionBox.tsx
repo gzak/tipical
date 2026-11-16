@@ -62,10 +62,10 @@ export function SuggestionBox() {
   return (
     <>
       {(phase === 'open' || phase === 'submitting') && (
-        <div className="fixed inset-0 z-40" onClick={dismiss} aria-hidden="true" />
+        <div className="fixed inset-0 z-20" onClick={dismiss} aria-hidden="true" />
       )}
 
-      <div className="fixed bottom-12 left-12 z-50 flex flex-col items-start gap-2">
+      <div className="fixed bottom-12 left-12 z-30 flex flex-col items-start gap-2">
         {phase === 'open' && (
           <div className="bg-white rounded-xl shadow-xl w-72 p-3 flex flex-col gap-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Send anonymous feedback</p>
