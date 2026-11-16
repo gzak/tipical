@@ -20,13 +20,14 @@ export function useTipReportData(business: Business) {
     enabled: isAuthenticated,
   });
 
-  // Mirror the latest aggregate into every business search cache entry so map
-  // pins reflect the current winning suggestion without a separate search refetch.
+  // Mirror the latest aggregate into every cached business list (area/text
+  // `search` and autocomplete `place` entries) so map pins reflect the current
+  // winning suggestion without a separate search refetch.
   useEffect(() => {
     if (!reportsQuery.data) return;
     const { winningPolicy, winningPolicyVoteCount } = reportsQuery.data;
     queryClient.setQueriesData<Business[]>(
-      { queryKey: ['businesses', 'search'], exact: false },
+      { queryKey: ['businesses'] },
       (businesses) =>
         businesses?.map(b =>
           b.googlePlaceId === googlePlaceId
