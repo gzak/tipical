@@ -56,7 +56,7 @@ export const Modal = ({
 
       {/* Modal */}
       <div
-        className={`relative bg-white rounded-lg shadow-xl ${sizeStyles[size]} w-full mx-4 max-h-[90vh] overflow-y-auto`}
+        className={`relative bg-white rounded-lg shadow-xl ${sizeStyles[size]} w-full mx-4 max-h-[90dvh] overflow-y-auto`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}

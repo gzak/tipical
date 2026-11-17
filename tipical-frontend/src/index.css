@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Prevent page-level zoom/pan; the map handles its own gestures. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: pan-x pan-y;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;

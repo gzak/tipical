@@ -47,7 +47,7 @@ function AppLayout({ initialCenter, initialZoom }: AppLayoutProps) {
   });
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden">
+    <div className="relative w-full h-dvh overflow-hidden">
       <GoogleMap
         businesses={businesses}
         isSearching={isLoading || isPlaceholderData}
@@ -71,7 +71,7 @@ function AppContent() {
 
   if (status === 'FAILED' || status === 'AUTH_FAILURE') {
     return (
-      <div className="flex items-center justify-center w-screen h-screen">
+      <div className="flex items-center justify-center w-full h-dvh">
         <p className="text-red-600 font-medium">Failed to load Google Maps</p>
       </div>
     );

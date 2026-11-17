@@ -6,6 +6,11 @@ import './index.css'
 import App from './App.tsx'
 import { queryClient } from './services/api'
 
+// iOS Safari ignores user-scalable=no; block its native pinch-zoom.
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(type, (e) => e.preventDefault(), { passive: false })
+}
+
 // Get Google OAuth Client ID from environment variables
 const googleClientId = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID
 
