@@ -19,7 +19,7 @@ namespace Tipical.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "tipping_policy", new[] { "no_tips", "tips_exclude_tax", "tips_include_tax" });
@@ -68,16 +68,14 @@ namespace Tipical.Infrastructure.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("google_place_id");
 
+                    b.Property<DateTimeOffset>("LastSyncedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_synced_at");
+
                     b.Property<Point>("Location")
                         .IsRequired()
                         .HasColumnType("geography (point)")
                         .HasColumnName("location");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name");
 
                     b.HasKey("Id");
 
@@ -87,8 +85,6 @@ namespace Tipical.Infrastructure.Migrations
                     b.HasIndex("Location");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "GIST");
-
-                    b.HasIndex("Name");
 
                     b.ToTable("businesses", (string)null);
                 });

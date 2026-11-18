@@ -7,15 +7,6 @@ public class TippingVoteRequest
 {
     /// <summary>The tip suggestion the user is reporting.</summary>
     public required TippingPolicy TippingPolicy { get; set; }
-
-    /// <summary>Display name of the business being reported on.</summary>
-    public required string Name { get; set; }
-
-    /// <summary>Latitude of the business location.</summary>
-    public required double Latitude { get; set; }
-
-    /// <summary>Longitude of the business location.</summary>
-    public required double Longitude { get; set; }
 }
 
 /// <summary>A single user's tip suggestion report for a business.</summary>

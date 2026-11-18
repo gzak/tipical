@@ -24,9 +24,6 @@ public class BusinessPinResponse
     /// <summary>Google Place ID for this business.</summary>
     public required string GooglePlaceId { get; set; }
 
-    /// <summary>Business display name.</summary>
-    public string Name { get; set; } = null!;
-
     /// <summary>Latitude of the business location.</summary>
     public decimal Latitude { get; set; }
 
@@ -43,6 +40,12 @@ public class BusinessPinResponse
 /// <summary>Rich business detail fetched lazily when a pin is opened.</summary>
 public class BusinessDetailResponse
 {
+    /// <summary>Business display name.</summary>
+    public string Name { get; set; } = null!;
+
+    /// <summary>Whether Google Places reports the business as permanently closed.</summary>
+    public bool IsPermanentlyClosed { get; set; }
+
     /// <summary>Google Places rating (1.0–5.0), if available.</summary>
     public double? Rating { get; set; }
 

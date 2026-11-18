@@ -1,6 +1,7 @@
 using Google.Api.Gax.Grpc;
 using Google.Maps.Places.V1;
 using Google.Type;
+using Grpc.Core;
 using Microsoft.Extensions.Configuration;
 using Tipical.Core.Services;
 
@@ -8,26 +9,32 @@ namespace Tipical.Infrastructure.Services;
 
 public class GooglePlacesService : IGooglePlacesService
 {
+    // DisplayName is unused; it keeps this session-ending call in the Pro tier so the autocomplete session stays free.
     private static readonly CallSettings GetPlaceSettings =
         FieldMask.For<Place>()
             .Include(p => new { p.Id, p.DisplayName, p.Location })
             .ToCallSettings();
 
+    private static readonly CallSettings LocationOnlySettings =
+        FieldMask.For<Place>()
+            .Include(p => new { p.Id, p.Location })
+            .ToCallSettings();
+
     private static readonly CallSettings NearbySearchSettings =
         FieldMask.For<SearchNearbyResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.Location })
+            .ThenInclude(p => new { p.Id, p.Location })
             .ToCallSettings();
 
     private static readonly CallSettings TextSearchSettings =
         FieldMask.For<SearchTextResponse>()
             .Include(r => r.Places)
-            .ThenInclude(p => new { p.Id, p.DisplayName, p.Location })
+            .ThenInclude(p => new { p.Id, p.Location })
             .ToCallSettings();
 
     private static readonly CallSettings DetailPlaceSettings =
         FieldMask.For<Place>()
-            .Include(p => new { p.Rating, p.UserRatingCount })
+            .Include(p => new { p.DisplayName, p.BusinessStatus, p.Rating, p.UserRatingCount })
             .Include(p => p.Photos)
             .ThenInclude(photo => photo.Name)
             .ToCallSettings();
@@ -90,14 +97,24 @@ public class GooglePlacesService : IGooglePlacesService
             DetailPlaceSettings);
     }
 
-    public async Task<IReadOnlyList<Place>> BulkFetchAsync(IEnumerable<string> placeIds)
+    public async Task<Place> GetPlaceLocationAsync(string placeId)
     {
-        var tasks = placeIds.Select(async id =>
+        return await _client.GetPlaceAsync(
+            new GetPlaceRequest { Name = $"places/{placeId}" },
+            LocationOnlySettings);
+    }
+
+    public async Task<BulkFetchResult> BulkFetchAsync(IEnumerable<string> placeIds)
+    {
+        var results = await Task.WhenAll(placeIds.Select(async id =>
         {
-            try { return await _client.GetPlaceAsync(new GetPlaceRequest { Name = $"places/{id}" }, GetPlaceSettings); }
-            catch { return null; }
-        });
-        return (await Task.WhenAll(tasks)).Where(p => p != null).Select(p => p!).ToList();
+            try { return (Id: id, Place: (Place?)await GetPlaceLocationAsync(id), NotFound: false); }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound) { return (Id: id, Place: null, NotFound: true); }
+            catch { return (Id: id, Place: null, NotFound: false); }
+        }));
+        return new BulkFetchResult(
+            [.. results.Select(r => r.Place).OfType<Place>()],
+            [.. results.Where(r => r.NotFound).Select(r => r.Id)]);
     }
 
     public async Task<string?> GetPhotoMediaUriAsync(string photoName, int maxWidthPx = 400)

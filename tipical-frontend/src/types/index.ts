@@ -8,7 +8,6 @@ export type TipSuggestion = typeof TipSuggestion[keyof typeof TipSuggestion];
 
 export interface Business {
   googlePlaceId: string;
-  name: string;
   latitude: number;
   longitude: number;
   winningPolicy?: TipSuggestion;
@@ -16,6 +15,8 @@ export interface Business {
 }
 
 export interface BusinessDetail {
+  name: string;
+  isPermanentlyClosed: boolean;
   rating?: number;
   reviewCount?: number;
   photos: string[];
@@ -58,7 +59,4 @@ export interface GoogleAuthRequest {
 
 export interface TipReportRequest {
   tippingPolicy: TipSuggestion;
-  name: string;
-  latitude: number;
-  longitude: number;
 }

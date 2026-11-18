@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import type { Business } from '../../types';
-import { POLICY_HEX_COLORS } from '../../utils/policy';
+import { POLICY_COLOR_NAMES, POLICY_HEX_COLORS } from '../../utils/policy';
+import { getPinNumber } from '../../utils/pinNumbers';
 
 const PIN_WIDTH = 22;
 const PIN_HEIGHT = 32;
@@ -31,7 +32,8 @@ export function BusinessMarker({ business, isActive, onMarkerClick }: BusinessMa
     [business.latitude, business.longitude]
   );
 
-  const color = POLICY_HEX_COLORS[business.winningPolicy ?? 'unknown'];
+  const policyKey = business.winningPolicy ?? 'unknown';
+  const color = POLICY_HEX_COLORS[policyKey];
 
   const handleClick = useCallback(
     () => onMarkerClick(business.googlePlaceId),
@@ -44,7 +46,7 @@ export function BusinessMarker({ business, isActive, onMarkerClick }: BusinessMa
   return (
     <AdvancedMarker
       position={position}
-      title={business.name}
+      title={`${POLICY_COLOR_NAMES[policyKey]} pin ${getPinNumber(business.googlePlaceId)}`}
       onClick={handleClick}
       zIndex={isActive ? 10 : 0}
     >

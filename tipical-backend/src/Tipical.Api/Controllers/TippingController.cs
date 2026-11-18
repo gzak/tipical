@@ -1,3 +1,4 @@
+using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
@@ -53,6 +54,8 @@ public class TippingController(ITippingService tippingService, ILogger<TippingCo
     [Authorize]
     [ProducesResponseType(typeof(TippingVoteResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
     public async Task<ActionResult<TippingVoteResponse>> SubmitReport(string googlePlaceId, [FromBody] TippingVoteRequest request)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
@@ -61,8 +64,19 @@ public class TippingController(ITippingService tippingService, ILogger<TippingCo
             return Unauthorized(new { message = "User ID not found in token" });
         }
 
-        var report = await tippingService.SubmitReportAsync(
-            googlePlaceId, userId, request.TippingPolicy, request.Name, request.Latitude, request.Longitude);
+        TippingVoteResponse? report;
+        try { report = await tippingService.SubmitReportAsync(googlePlaceId, userId, request.TippingPolicy); }
+        catch (RpcException ex)
+        {
+            logger.LogError(ex, "Places lookup failed for {GooglePlaceId}", googlePlaceId);
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = "Could not look up this business" });
+        }
+
+        if (report == null)
+        {
+            return NotFound(new { message = "Business not found" });
+        }
+
         return Ok(report);
     }
 }
