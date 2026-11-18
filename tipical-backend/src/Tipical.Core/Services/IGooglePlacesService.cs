@@ -2,6 +2,8 @@ using Google.Maps.Places.V1;
 
 namespace Tipical.Core.Services;
 
+public record BulkFetchResult(IReadOnlyList<Place> Places, IReadOnlyList<string> NotFoundPlaceIds);
+
 public interface IGooglePlacesService
 {
     Task<SearchTextResponse> SearchAsync(string query, double latitude, double longitude, int radius, int maxResultCount = 20);
@@ -9,6 +11,7 @@ public interface IGooglePlacesService
     Task<AutocompletePlacesResponse> AutocompleteAsync(string input, double latitude, double longitude, int radius);
     Task<Place> GetPlaceAsync(string placeId, string sessionToken);
     Task<Place> GetPlaceDetailsAsync(string placeId);
-    Task<IReadOnlyList<Place>> BulkFetchAsync(IEnumerable<string> placeIds);
+    Task<Place> GetPlaceLocationAsync(string placeId);
+    Task<BulkFetchResult> BulkFetchAsync(IEnumerable<string> placeIds);
     Task<string?> GetPhotoMediaUriAsync(string photoName, int maxWidthPx = 400);
 }

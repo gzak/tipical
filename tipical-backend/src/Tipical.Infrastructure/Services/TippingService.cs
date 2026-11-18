@@ -1,3 +1,4 @@
+using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using Tipical.Core.DTOs;
@@ -11,14 +12,21 @@ namespace Tipical.Infrastructure.Services;
 public class TippingService(
     ITippingVoteRepository tippingVoteRepository,
     IBusinessRepository businessRepository,
+    IGooglePlacesService googlePlacesService,
     ApplicationDbContext context) : ITippingService
 {
-    public async Task<TippingVoteResponse> SubmitReportAsync(string googlePlaceId, string userId, TippingPolicy policy, string name, double latitude, double longitude)
+    public async Task<TippingVoteResponse?> SubmitReportAsync(string googlePlaceId, string userId, TippingPolicy policy)
     {
-        var location = new Point(longitude, latitude) { SRID = GeoConstants.Wgs84Srid };
+        // Resolve a new business's location before opening the transaction to avoid holding it across a network call.
+        Point? location = null;
+        if (await businessRepository.GetByGooglePlaceIdAsync(googlePlaceId) is null)
+        {
+            try { location = (await googlePlacesService.GetPlaceLocationAsync(googlePlaceId)).Location.ToPoint(); }
+            catch (RpcException ex) when (ex.StatusCode is StatusCode.NotFound or StatusCode.InvalidArgument) { return null; }
+        }
 
         await using var tx = await context.Database.BeginTransactionAsync();
-        var business = await businessRepository.GetOrCreateAsync(googlePlaceId, name, location);
+        var business = await businessRepository.GetOrCreateAsync(googlePlaceId, location);
         var report = await tippingVoteRepository.UpsertAsync(business.Id, userId, policy);
         await tx.CommitAsync();
 

@@ -48,6 +48,7 @@ export function BusinessInfoWindow({ business }: BusinessInfoWindowProps) {
   const [photoIndex, setPhotoIndex] = useState(0);
 
   const photos = detail?.photos ?? [];
+  const name = detail?.name ?? '';
 
   const handleCTA = () => {
     if (isAuthenticated) {
@@ -83,7 +84,7 @@ export function BusinessInfoWindow({ business }: BusinessInfoWindowProps) {
         <div className="relative h-28 overflow-hidden rounded-t">
           <img
             src={photos[photoIndex]}
-            alt={business.name}
+            alt={name}
             className="w-full h-full object-cover"
           />
           {photos.length > 1 && (
@@ -110,9 +111,13 @@ export function BusinessInfoWindow({ business }: BusinessInfoWindowProps) {
       {renderPhotoArea()}
 
       <div className="p-2">
-        <p className="font-semibold text-gray-900 text-sm leading-tight mb-1">
-          {business.name}
-        </p>
+        {detailLoading ? (
+          <div className="animate-pulse h-4 bg-gray-200 rounded w-32 mb-1" />
+        ) : name && (
+          <p className="font-semibold text-gray-900 text-sm leading-tight mb-1">
+            {name}
+          </p>
+        )}
 
         {detailLoading ? (
           <div className="animate-pulse h-3 bg-gray-100 rounded w-20 mb-2" />
@@ -125,35 +130,48 @@ export function BusinessInfoWindow({ business }: BusinessInfoWindowProps) {
           </p>
         ) : null}
 
-        {business.winningPolicy !== undefined ? (
-          <span
-            className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${POLICY_BADGE_STYLES[business.winningPolicy]}`}
-          >
-            {POLICY_LABELS[business.winningPolicy]}
+        {detailLoading ? (
+          <>
+            <div className="animate-pulse h-5 bg-gray-100 rounded-full w-24" />
+            <div className="animate-pulse h-8 bg-gray-100 rounded mt-2" />
+          </>
+        ) : detail?.isPermanentlyClosed ? (
+          <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${POLICY_BADGE_STYLES.unknown}`}>
+            Permanently closed
           </span>
         ) : (
-          <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${POLICY_BADGE_STYLES.unknown}`}>
-            No reports
-          </span>
-        )}
+          <>
+            {business.winningPolicy !== undefined ? (
+              <span
+                className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${POLICY_BADGE_STYLES[business.winningPolicy]}`}
+              >
+                {POLICY_LABELS[business.winningPolicy]}
+              </span>
+            ) : (
+              <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${POLICY_BADGE_STYLES.unknown}`}>
+                No reports
+              </span>
+            )}
 
-        {business.winningPolicyVoteCount != null && business.winningPolicyVoteCount > 0 && (
-          <p className="text-xs text-gray-400 mt-0.5 mb-1">
-            Based on {business.winningPolicyVoteCount}{' '}
-            {business.winningPolicyVoteCount === 1 ? 'report' : 'reports'}
-          </p>
-        )}
+            {business.winningPolicyVoteCount != null && business.winningPolicyVoteCount > 0 && (
+              <p className="text-xs text-gray-400 mt-0.5 mb-1">
+                Based on {business.winningPolicyVoteCount}{' '}
+                {business.winningPolicyVoteCount === 1 ? 'report' : 'reports'}
+              </p>
+            )}
 
-        <Button
-          variant={isAuthenticated ? 'primary' : 'secondary'}
-          size="sm"
-          fullWidth
-          onClick={handleCTA}
-          aria-label={isAuthenticated ? `Report for ${business.name}` : `Sign in to report for ${business.name}`}
-          className="mt-2"
-        >
-          {isAuthenticated ? 'Report' : 'Sign in to report'}
-        </Button>
+            <Button
+              variant={isAuthenticated ? 'primary' : 'secondary'}
+              size="sm"
+              fullWidth
+              onClick={handleCTA}
+              aria-label={name ? (isAuthenticated ? `Report for ${name}` : `Sign in to report for ${name}`) : undefined}
+              className="mt-2"
+            >
+              {isAuthenticated ? 'Report' : 'Sign in to report'}
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

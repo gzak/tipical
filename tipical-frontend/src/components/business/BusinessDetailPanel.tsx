@@ -21,11 +21,12 @@ export function BusinessDetailPanel({ business }: BusinessDetailPanelProps) {
   const { data: detail, isLoading: detailLoading } = useBusinessDetail(business.googlePlaceId, { enabled: showBusinessPanel });
 
   const photos = detail?.photos ?? [];
+  const name = detail?.name ?? '';
   // Google's documented "universal URL" format (maps/search/?api=1&query=...&query_place_id=...)
   // is guaranteed to auto-launch the native Google Maps app on iOS/Android when installed, with
   // a plain link -- no custom scheme or JS navigation workaround needed. See:
   // https://developers.google.com/maps/documentation/urls/get-started#search-examples
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.name)}&query_place_id=${business.googlePlaceId}`;
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${business.latitude},${business.longitude}&query_place_id=${business.googlePlaceId}`;
 
   const mapsLink = (
     <a
@@ -43,7 +44,7 @@ export function BusinessDetailPanel({ business }: BusinessDetailPanelProps) {
     <Sidebar
       isOpen={showBusinessPanel}
       onClose={closeBusinessPanel}
-      title={business.name}
+      title={name || (detailLoading ? 'Loading…' : 'Business')}
       subtitle={mapsLink}
       width="sm"
     >
@@ -55,14 +56,14 @@ export function BusinessDetailPanel({ business }: BusinessDetailPanelProps) {
           <div className="grid grid-cols-2 gap-1">
             <img
               src={photos[0]}
-              alt={business.name}
+              alt={name}
               className="col-span-2 w-full aspect-[2/1] object-cover rounded"
             />
             {photos.slice(1, 5).map((src, i) => (
               <img
                 key={i}
                 src={src}
-                alt={`${business.name} photo ${i + 2}`}
+                alt={`${name} photo ${i + 2}`}
                 className="w-full aspect-[3/2] object-cover rounded"
               />
             ))}

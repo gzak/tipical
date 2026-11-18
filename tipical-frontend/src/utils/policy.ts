@@ -14,6 +14,13 @@ export const POLICY_BADGE_STYLES: Record<TipSuggestionType | 'unknown', string> 
   unknown: 'bg-gray-100 text-gray-600',
 };
 
+export const POLICY_COLOR_NAMES: Record<TipSuggestionType | 'unknown', string> = {
+  [TipSuggestion.NoTips]: 'Green',
+  [TipSuggestion.TipsExcludeTax]: 'Yellow',
+  [TipSuggestion.TipsIncludeTax]: 'Red',
+  unknown: 'Gray',
+};
+
 export const POLICY_HEX_COLORS: Record<TipSuggestionType | 'unknown', string> = {
   [TipSuggestion.NoTips]: '#22c55e',
   [TipSuggestion.TipsExcludeTax]: '#eab308',

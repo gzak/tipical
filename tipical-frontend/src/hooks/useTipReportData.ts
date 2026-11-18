@@ -39,12 +39,7 @@ export function useTipReportData(business: Business) {
 
   const submitReportMutation = useMutation<TipReport, Error, TipSuggestion>({
     mutationFn: (policy) =>
-      tippingService.submitReport(googlePlaceId, {
-        tippingPolicy: policy,
-        name: business.name,
-        latitude: business.latitude,
-        longitude: business.longitude,
-      }),
+      tippingService.submitReport(googlePlaceId, { tippingPolicy: policy }),
     onSuccess: (data) => {
       queryClient.setQueryData(['tipping', 'userVote', googlePlaceId], data);
       queryClient.invalidateQueries({ queryKey: ['tipping', 'votes', googlePlaceId] });

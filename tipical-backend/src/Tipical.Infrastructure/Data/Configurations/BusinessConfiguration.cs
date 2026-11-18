@@ -25,18 +25,15 @@ public class BusinessConfiguration : IEntityTypeConfiguration<Business>
         builder.HasIndex(b => b.GooglePlaceId)
             .IsUnique();
 
-        builder.Property(b => b.Name)
-            .HasColumnName("name")
-            .HasMaxLength(500);
-
-        builder.HasIndex(b => b.Name);
-
         builder.Property(b => b.Location)
             .HasColumnName("location")
             .HasColumnType("geography (point)");
 
         builder.HasIndex(b => b.Location)
             .HasMethod("GIST");
+
+        builder.Property(b => b.LastSyncedAt)
+            .HasColumnName("last_synced_at");
 
         builder.HasMany(b => b.TippingVotes)
             .WithOne(tv => tv.Business)

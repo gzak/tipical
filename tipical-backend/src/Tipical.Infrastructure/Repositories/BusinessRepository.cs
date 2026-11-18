@@ -24,13 +24,16 @@ public class BusinessRepository(ApplicationDbContext context) : IBusinessReposit
             .ToDictionaryAsync(b => b.GooglePlaceId, b => b);
     }
 
-    public async Task<Business> GetOrCreateAsync(string googlePlaceId, string name, Point location)
+    public async Task<Business> GetOrCreateAsync(string googlePlaceId, Point? location)
     {
         var business = await GetByGooglePlaceIdAsync(googlePlaceId);
         if (business is not null)
             return business;
 
-        await context.Upsert(new Business { GooglePlaceId = googlePlaceId, Name = name, Location = location })
+        if (location is null)
+            throw new InvalidOperationException($"Business with GooglePlaceId '{googlePlaceId}' does not exist and no location was given to create it.");
+
+        await context.Upsert(new Business { GooglePlaceId = googlePlaceId, Location = location, LastSyncedAt = DateTimeOffset.UtcNow })
             .On(b => b.GooglePlaceId)
             .NoUpdate()
             .RunAsync();
@@ -56,4 +59,8 @@ public class BusinessRepository(ApplicationDbContext context) : IBusinessReposit
             .ToListAsync();
     }
 
+    public Task SaveChangesAsync() => context.SaveChangesAsync();
+
+    public Task DeleteByGooglePlaceIdsAsync(IReadOnlyCollection<string> googlePlaceIds) =>
+        context.Businesses.Where(b => googlePlaceIds.Contains(b.GooglePlaceId)).ExecuteDeleteAsync();
 }
